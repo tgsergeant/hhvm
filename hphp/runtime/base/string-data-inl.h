@@ -92,7 +92,7 @@ inline void StringData::destruct() {
 
 //////////////////////////////////////////////////////////////////////
 
-inline void StringData::setRefCount(RefCount n) { m_count = n; }
+inline void StringData::setRefCount(RefCount n) { m_count = n; std::cout << "set" << this << " " << m_count << '\n';}
 inline bool StringData::isStatic() const {
   return m_count == StaticValue;
 }
