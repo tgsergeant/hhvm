@@ -30,6 +30,10 @@
 #include "hphp/util/trace.h"
 #include "hphp/util/atomic.h"
 
+#include <iostream>
+
+using std::cout;
+
 namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -105,7 +109,9 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
 #define DECREF_AND_RELEASE_MAYBE_STATIC(thiz, action) do {              \
     assert(!MemoryManager::sweeping());                                 \
     assert_refcount_realistic_nz(thiz->m_count);                        \
+    std::cout << "decr" << thiz << " " << thiz->m_count << '\n';				\
     if (thiz->m_count == 1) {                                           \
+      std::cout << "action" << thiz << '\n';									\
       action;                                                           \
     } else if (thiz->m_count > 1) {                                     \
       --thiz->m_count;                                                  \
@@ -140,13 +146,20 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
   void incRefCount() const {                                            \
     assert(!MemoryManager::sweeping());                                 \
     assert_refcount_realistic(m_count);                                 \
-    if (isRefCounted()) { ++m_count; }                                  \
+    if (isRefCounted()) { 												\
+		++m_count; 														\
+		std::cout << "incr" << this << " " << m_count << '\n';					\
+	}                                  									\
   }                                                                     \
                                                                         \
   RefCount decRefCount() const {                                        \
     assert(!MemoryManager::sweeping());                                 \
-    assert_refcount_realistic_nz(m_count);                              \
-    return isRefCounted() ? --m_count : m_count;                        \
+    assert_refcount_realistic_nz(m_count);								\
+	if (isRefCounted()) {                   							\
+		--m_count;														\
+		std::cout << "decr" << this << " " << m_count << '\n';					\
+	}																	\
+	return m_count;														\
   }                                                                     \
                                                                         \
   ALWAYS_INLINE void decRefAndRelease() {                               \
@@ -192,18 +205,23 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert(!MemoryManager::sweeping());                 \
     assert_refcount_realistic_ns(m_count);              \
     ++m_count;                                          \
+    std::cout << "incr" << this << " " << m_count << '\n';		\
   }                                                     \
                                                         \
   RefCount decRefCount() const {                        \
     assert(!MemoryManager::sweeping());                 \
     assert_refcount_realistic_ns_nz(m_count);           \
-    return --m_count;                                   \
+    --m_count;                                   		\
+    std::cout << "decr" << this << " " << m_count << '\n';		\
+    return m_count;										\
   }                                                     \
                                                         \
   ALWAYS_INLINE bool decRefAndRelease() {               \
     assert(!MemoryManager::sweeping());                 \
     assert_refcount_realistic_ns_nz(m_count);           \
-    if (!--m_count) {                                   \
+    std::cout << "decr" << this << " " << m_count << '\n';		\
+    if (!--m_count) {	                                \
+      std::cout << "release" << this << '\n';					\
       release();                                        \
       return true;                                      \
     }                                                   \
@@ -231,8 +249,8 @@ class AtomicCountable {
  public:
   AtomicCountable() : m_count(0) {}
   RefCount getCount() const { return m_count; }
-  void incAtomicCount() const { ++m_count; }
-  RefCount decAtomicCount() const { return --m_count; }
+  void incAtomicCount() const { ++m_count; std::cout << "atom incr" << this << " " << m_count << '\n'; }
+  RefCount decAtomicCount() const { --m_count; std::cout << "atom decr" << this << " " << m_count; return m_count << '\n'; }
  protected:
   mutable std::atomic<RefCount> m_count;
 };
