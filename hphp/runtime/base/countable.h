@@ -219,8 +219,9 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
   ALWAYS_INLINE bool decRefAndRelease() {               \
     assert(!MemoryManager::sweeping());                 \
     assert_refcount_realistic_ns_nz(m_count);           \
-    std::cout << "decr" << this << " " << m_count << '\n';		\
-    if (!--m_count) {	                                \
+    --m_count;											\
+	std::cout << "decr" << this << " " << m_count << '\n';		\
+    if (!m_count) {	                                \
       std::cout << "release" << this << '\n';					\
       release();                                        \
       return true;                                      \
@@ -250,7 +251,7 @@ class AtomicCountable {
   AtomicCountable() : m_count(0) {}
   RefCount getCount() const { return m_count; }
   void incAtomicCount() const { ++m_count; std::cout << "atom incr" << this << " " << m_count << '\n'; }
-  RefCount decAtomicCount() const { --m_count; std::cout << "atom decr" << this << " " << m_count; return m_count << '\n'; }
+  RefCount decAtomicCount() const { --m_count; std::cout << "atom decr" << this << " " << m_count << '\n'; return m_count; }
  protected:
   mutable std::atomic<RefCount> m_count;
 };
