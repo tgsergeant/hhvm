@@ -76,7 +76,7 @@ protected:
 
 public:
   IMPLEMENT_COUNTABLE_METHODS
-  void setRefCount(RefCount n) { m_count = n; std::cout << "set" << this << " " << n << '\n'; }
+  void setRefCount(RefCount n) { m_count = n; track_refcount(m_count); }
 
   /**
    * Create a new ArrayData with specified array element(s).
