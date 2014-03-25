@@ -14,6 +14,23 @@
    +----------------------------------------------------------------------+
 */
 
-#include "hphp/runtime/base/countable.h"
+#ifndef incl_HPHP_REFCOUNT_SURVEY_H_
+#define incl_HPHP_REFCOUNT_SURVEY_H_
 
+#include <cstdlib>
+
+namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
+
+/*
+ * Keep track of how large reference counts get.
+ *
+ */
+void track_refcount(const void *address, int32_t value);
+
+void track_refcount_release(const void *address);
+
+void dump_refcount_survey();
+}
+
+#endif
