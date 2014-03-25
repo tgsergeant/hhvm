@@ -7824,8 +7824,6 @@ void ExecutionContext::requestInit() {
 void ExecutionContext::requestExit() {
   MemoryProfile::finishProfiling();
 
-  dump_refcount_survey();
-
   manageAPCHandle();
   syncGdbState();
   mcg->requestExit();
