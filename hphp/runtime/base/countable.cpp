@@ -15,22 +15,27 @@
 */
 
 #include "hphp/runtime/base/countable.h"
+#include <iostream>
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace HPHP {
 long sizecounts[32] = {0};
 
+std::map<const void *, int> live_values;
+
+TRACE_SET_MOD(tmp1);
+
 void dump_refcount_survey() {
-	std::cout << "Refcount survey statistics" << std::endl;
+	TRACE(1, "---Refcount survey statistics---\n\n");
 	long bitcounts[32] = {0};
 	int bc;
 
 	long total_bits = 0;
 	long total_count = 0;
 
-	std::cout << "Raw Sizes" << std::endl;
+	TRACE(1, "Raw Sizes\n");
 	for(int i = 0; i < 32; i++) {
-		std::cout << i << ": " << sizecounts[i] << std::endl;
+		FTRACE(1, "{}: {}\n", i, sizecounts[i]);
 
 		bc = ceil(log2((double)i + 1));
 		bitcounts[bc] += sizecounts[i];
@@ -57,21 +62,40 @@ void dump_refcount_survey() {
 		}
 	}
 
-	std::cout << "Bitcounts" << std::endl;
+	TRACE(1, "\nBits required\n");
 	for(int i = 0; i < 32; i++) {
-		std::cout << i << ": " << bitcounts[i] << std::endl;
+		FTRACE(1, "{}: {}\n", i, bitcounts[i]);
 	}
 
-	std::cout << "Mean: " << mean << std::endl;
-	std::cout << "Median: " << median << std::endl;
+	FTRACE(1, "Mean: {}\n", mean);
+	FTRACE(1, "Median: {}\n", median);
 
 }
 
-void track_refcount(RefCount value) {
+void track_refcount(const void *address, RefCount value) {
 	if (value > 31) {
 		value = 31;
 	}
-	sizecounts[value] += 1;
+	if (value < 0) {
+		return;
+	}
+
+	auto live_value = live_values.find(address);
+	if (live_value == live_values.end()) {
+		live_values[address] = value;
+	}
+	else {
+		if(live_value->second < value) {
+			live_values[address] = value;
+		}
+	}
 }
 
+void track_refcount_release(const void *address) {
+	auto live_value = live_values.find(address);
+	if(live_value != live_values.end()) {
+		sizecounts[live_value->second] += 1;
+		live_values.erase(live_value);
+	}
+}
 }

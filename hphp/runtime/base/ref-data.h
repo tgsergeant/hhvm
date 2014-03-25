@@ -169,7 +169,7 @@ struct RefData {
     auto realCount = getRealCount();
     if (realCount >= 2) {
       m_count = realCount;
-      track_refcount(m_count);
+      track_refcount((void *)this, m_count);
       m_cowAndZ = 0;
     } else {
       assert(!m_cow);
@@ -181,7 +181,7 @@ struct RefData {
     auto realCount = getRealCount();
     if (realCount >= 2) {
       m_count = realCount - 1;
-      track_refcount(m_count);
+      track_refcount((void *)this, m_count);
       m_cow = 1;
       m_z = 0;
     } else {
@@ -205,13 +205,13 @@ struct RefData {
   void zAddRef() {
     if (getRealCount() != 1) {
       ++m_count;
-      track_refcount(m_count);
+      track_refcount((void *)this, m_count);
       return;
     }
     assert(!m_cow);
     assert(m_z == 0 || m_z == 1);
     m_count = m_z + 1;
-    track_refcount(m_count);
+    track_refcount((void *)this, m_count);
     m_cow = !m_z;
     m_z = 0;
   }
@@ -223,7 +223,7 @@ struct RefData {
       return;
     }
     m_count = 1;
-    track_refcount(m_count);
+    track_refcount((void *)this, m_count);
     m_z = !m_cow;
     m_cow = 0;
   }
@@ -237,7 +237,7 @@ struct RefData {
     m_cow = !zeroOrOne && !isRef;
     m_z = zeroOrOne && isRef;
     m_count = val - m_cow;
-    track_refcount(m_count);
+    track_refcount((void *)this, m_count);
     assert(zRefcount() == val);
     assert(zIsRef() == isRef);
   }
