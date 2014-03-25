@@ -29,8 +29,7 @@
 #include "hphp/util/compatibility.h"
 #include "hphp/util/trace.h"
 #include "hphp/util/atomic.h"
-
-#include <iostream>
+#include "hphp/util/refcount-survey.h"
 
 
 namespace HPHP {
@@ -74,16 +73,6 @@ const size_t FAST_REFCOUNT_OFFSET = 12;
 
 
 /*
- * Keep track of how large reference counts get.
- *
- */
-void track_refcount(const void *address, RefCount value);
-
-void track_refcount_release(const void *address);
-
-void dump_refcount_survey();
-
-/*
  * Real count values should always be less than or equal to
  * RefCountMaxRealistic, and asserting this will also catch
  * common malloc freed-memory patterns (e.g. 0x5a5a5a5a and smart
@@ -121,7 +110,7 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert_refcount_realistic_nz(thiz->m_count);                        \
     if (thiz->m_count == 1) {                                           \
       action;                                                           \
-      track_refcount_release(thiz);										\
+      track_refcount_release(thiz);                                     \
     } else if (thiz->m_count > 1) {                                     \
       --thiz->m_count;                                                  \
     }                                                                   \
@@ -155,19 +144,19 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
   void incRefCount() const {                                            \
     assert(!MemoryManager::sweeping());                                 \
     assert_refcount_realistic(m_count);                                 \
-    if (isRefCounted()) { 												\
-		++m_count; 														\
-		track_refcount(this, m_count);					\
-	}                                  									\
+    if (isRefCounted()) {                                               \
+        ++m_count;                                                      \
+        track_refcount(this, m_count);                                  \
+    }                                                                   \
   }                                                                     \
                                                                         \
   RefCount decRefCount() const {                                        \
     assert(!MemoryManager::sweeping());                                 \
-    assert_refcount_realistic_nz(m_count);								\
-	if (isRefCounted()) {                   							\
-		--m_count;														\
-	}																	\
-	return m_count;														\
+    assert_refcount_realistic_nz(m_count);                              \
+    if (isRefCounted()) {                                               \
+        --m_count;                                                      \
+    }                                                                   \
+    return m_count;                                                     \
   }                                                                     \
                                                                         \
   ALWAYS_INLINE void decRefAndRelease() {                               \
@@ -186,7 +175,7 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert_refcount_realistic(m_count);         \
     m_count = UncountedValue;                   \
   }                                             \
-  bool isUncounted() const {                   \
+  bool isUncounted() const {                    \
     return m_count == UncountedValue;           \
   }                                             \
   IMPLEMENT_COUNTABLE_METHODS_NO_STATIC
@@ -213,23 +202,23 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert(!MemoryManager::sweeping());                 \
     assert_refcount_realistic_ns(m_count);              \
     ++m_count;                                          \
-    track_refcount(this, m_count);							\
+    track_refcount(this, m_count);                      \
   }                                                     \
                                                         \
   RefCount decRefCount() const {                        \
     assert(!MemoryManager::sweeping());                 \
     assert_refcount_realistic_ns_nz(m_count);           \
-    --m_count;                                   		\
-    return m_count;										\
+    --m_count;                                          \
+    return m_count;                                     \
   }                                                     \
                                                         \
   ALWAYS_INLINE bool decRefAndRelease() {               \
     assert(!MemoryManager::sweeping());                 \
     assert_refcount_realistic_ns_nz(m_count);           \
-    --m_count;											\
-    if (!m_count) {	                                \
+    --m_count;                                          \
+    if (!m_count) {                                     \
       release();                                        \
-      track_refcount_release(this);					\
+      track_refcount_release(this);                     \
       return true;                                      \
     }                                                   \
     return false;                                       \
