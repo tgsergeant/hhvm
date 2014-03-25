@@ -77,7 +77,9 @@ const size_t FAST_REFCOUNT_OFFSET = 12;
  * Keep track of how large reference counts get.
  *
  */
-void track_refcount(RefCount value);
+void track_refcount(const void *address, RefCount value);
+
+void track_refcount_release(const void *address);
 
 void dump_refcount_survey();
 
@@ -119,6 +121,7 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert_refcount_realistic_nz(thiz->m_count);                        \
     if (thiz->m_count == 1) {                                           \
       action;                                                           \
+      track_refcount_release(thiz);										\
     } else if (thiz->m_count > 1) {                                     \
       --thiz->m_count;                                                  \
     }                                                                   \
@@ -154,7 +157,7 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert_refcount_realistic(m_count);                                 \
     if (isRefCounted()) { 												\
 		++m_count; 														\
-		track_refcount(m_count);					\
+		track_refcount(this, m_count);					\
 	}                                  									\
   }                                                                     \
                                                                         \
@@ -210,7 +213,7 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert(!MemoryManager::sweeping());                 \
     assert_refcount_realistic_ns(m_count);              \
     ++m_count;                                          \
-    track_refcount(m_count);							\
+    track_refcount(this, m_count);							\
   }                                                     \
                                                         \
   RefCount decRefCount() const {                        \
@@ -226,6 +229,7 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     --m_count;											\
     if (!m_count) {	                                \
       release();                                        \
+      track_refcount_release(this);					\
       return true;                                      \
     }                                                   \
     return false;                                       \
@@ -252,7 +256,7 @@ class AtomicCountable {
  public:
   AtomicCountable() : m_count(0) {}
   RefCount getCount() const { return m_count; }
-  void incAtomicCount() const { ++m_count; track_refcount(m_count); }
+  void incAtomicCount() const { ++m_count; track_refcount(this, m_count); }
   RefCount decAtomicCount() const { return --m_count; }
  protected:
   mutable std::atomic<RefCount> m_count;
