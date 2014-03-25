@@ -74,7 +74,7 @@ protected:
 
 public:
   IMPLEMENT_COUNTABLE_METHODS
-  void setRefCount(RefCount n) { m_count = n; track_refcount(m_count); }
+  void setRefCount(RefCount n) { m_count = n; track_refcount((void *)this, m_count); }
 
   /**
    * Create a new ArrayData with specified array element(s).
