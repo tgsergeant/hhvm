@@ -7837,6 +7837,8 @@ void ExecutionContext::requestExit() {
     m_globalVarEnv = 0;
   }
 
+  dump_refcount_survey();
+
   if (Logger::UseRequestLog) Logger::SetThreadHook(nullptr, nullptr);
 }
 
