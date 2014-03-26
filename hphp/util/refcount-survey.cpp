@@ -17,13 +17,8 @@
 #include "hphp/util/refcount-survey.h"
 #include "hphp/runtime/base/thread-init-fini.h"
 
-#include <boost/unordered_map.hpp>
-
 namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
-long sizecounts[32] = {0};
-
-boost::unordered_map<const void *, int> live_values;
 
 TRACE_SET_MOD(tmp1);
 
@@ -38,8 +33,36 @@ static InitFiniNode server_death (
   InitFiniNode::When::ServerExit
 );
 
+//Need to initialise it before we do anything
+//We don't actually do anything with this object
+RefcountSurvey::TlsWrapper tls;
+
+// Return the survey object for the current thread
+RefcountSurvey &survey() { return *RefcountSurvey::TlsWrapper::getCheck(); }
+
+void track_refcount_operation(RefcountOperation op, const void *address, int32_t value) {
+	survey().track_refcount_operation(op, address, value);
+}
+
 void dump_refcount_survey() {
-	TRACE(1, "---Refcount survey statistics---\n\n");
+	survey().dump_refcount_survey();
+}
+
+void RefcountSurvey::Create(void *storage) {
+	new (storage) RefcountSurvey();
+}
+
+void RefcountSurvey::Delete(RefcountSurvey *survey) {
+	survey->~RefcountSurvey();
+}
+
+void RefcountSurvey::OnThreadExit(RefcountSurvey *survey) {
+	TRACE(1, "~~~Survey thread died~~~");
+	survey->~RefcountSurvey();
+}
+
+void RefcountSurvey::dump_refcount_survey() {
+	TRACE(1, "---Request Refcount survey statistics---\n\n");
 	long bitcounts[32] = {0};
 	int bc;
 
@@ -83,9 +106,14 @@ void dump_refcount_survey() {
 	FTRACE(1, "Mean: {}\n", mean);
 	FTRACE(1, "Median: {}\n", median);
 
+	//Reset the sizecounts
+	for(int i = 0; i < 32; i++) {
+		sizecounts[i] = 0;
+	}
+
 }
 
-void track_refcount_release(const void *address) {
+void RefcountSurvey::track_release(const void *address) {
 	auto live_value = live_values.find(address);
 	if(live_value != live_values.end()) {
 		sizecounts[live_value->second] += 1;
@@ -93,7 +121,7 @@ void track_refcount_release(const void *address) {
 	}
 }
 
-void track_refcount_change(const void *address, int32_t value) {
+void RefcountSurvey::track_change(const void *address, int32_t value) {
 	if (value > 31) {
 		value = 31;
 	}
@@ -112,15 +140,15 @@ void track_refcount_change(const void *address, int32_t value) {
 	}
 }
 
-void track_refcount_operation(RefcountOperation op, const void *address, int32_t value) {
+void RefcountSurvey::track_refcount_operation(RefcountOperation op, const void *address, int32_t value) {
 	switch(op) {
 	case RC_RELEASE:
-		track_refcount_release(address);
+		track_release(address);
 		break;
 	case RC_DEC:
 	case RC_INC:
 	case RC_SET:
-		track_refcount_change(address, value);
+		track_change(address, value);
 		break;
 	}
 }
