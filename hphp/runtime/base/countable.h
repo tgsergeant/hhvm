@@ -110,9 +110,10 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert_refcount_realistic_nz(thiz->m_count);                        \
     if (thiz->m_count == 1) {                                           \
       action;                                                           \
-      track_refcount_release(thiz);                                     \
+      track_refcount_operation(RC_RELEASE, thiz);                       \
     } else if (thiz->m_count > 1) {                                     \
       --thiz->m_count;                                                  \
+      track_refcount_operation(RC_DEC, thiz, thiz->m_count);            \
     }                                                                   \
   } while (false)
 
@@ -146,7 +147,7 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert_refcount_realistic(m_count);                                 \
     if (isRefCounted()) {                                               \
         ++m_count;                                                      \
-        track_refcount(this, m_count);                                  \
+        track_refcount_operation(RC_INC, this, m_count);                \
     }                                                                   \
   }                                                                     \
                                                                         \
@@ -155,6 +156,7 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert_refcount_realistic_nz(m_count);                              \
     if (isRefCounted()) {                                               \
         --m_count;                                                      \
+        track_refcount_operation(RC_DEC, this, m_count);                \
     }                                                                   \
     return m_count;                                                     \
   }                                                                     \
@@ -202,13 +204,14 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert(!MemoryManager::sweeping());                 \
     assert_refcount_realistic_ns(m_count);              \
     ++m_count;                                          \
-    track_refcount(this, m_count);                      \
+    track_refcount_operation(RC_INC, this, m_count);    \
   }                                                     \
                                                         \
   RefCount decRefCount() const {                        \
     assert(!MemoryManager::sweeping());                 \
     assert_refcount_realistic_ns_nz(m_count);           \
     --m_count;                                          \
+    track_refcount_operation(RC_DEC, this, m_count);    \
     return m_count;                                     \
   }                                                     \
                                                         \
@@ -218,8 +221,11 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     --m_count;                                          \
     if (!m_count) {                                     \
       release();                                        \
-      track_refcount_release(this);                     \
+      track_refcount_operation(RC_RELEASE, this);       \
       return true;                                      \
+    }                                                   \
+    else {                                              \
+      track_refcount_operation(RC_DEC, this, m_count);  \
     }                                                   \
     return false;                                       \
   }
@@ -245,8 +251,8 @@ class AtomicCountable {
  public:
   AtomicCountable() : m_count(0) {}
   RefCount getCount() const { return m_count; }
-  void incAtomicCount() const { ++m_count; track_refcount(this, m_count); }
-  RefCount decAtomicCount() const { return --m_count; }
+  void incAtomicCount() const { ++m_count; track_refcount_operation(RC_INC, this, m_count); }
+  RefCount decAtomicCount() const { --m_count; track_refcount_operation(RC_DEC, this, m_count); return m_count; }
  protected:
   mutable std::atomic<RefCount> m_count;
 };

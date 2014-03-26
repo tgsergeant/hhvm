@@ -85,7 +85,15 @@ void dump_refcount_survey() {
 
 }
 
-void track_refcount(const void *address, RefCount value) {
+void track_refcount_release(const void *address) {
+	auto live_value = live_values.find(address);
+	if(live_value != live_values.end()) {
+		sizecounts[live_value->second] += 1;
+		live_values.erase(live_value);
+	}
+}
+
+void track_refcount_change(const void *address, int32_t value) {
 	if (value > 31) {
 		value = 31;
 	}
@@ -104,13 +112,20 @@ void track_refcount(const void *address, RefCount value) {
 	}
 }
 
-void track_refcount_release(const void *address) {
-	auto live_value = live_values.find(address);
-	if(live_value != live_values.end()) {
-		sizecounts[live_value->second] += 1;
-		live_values.erase(live_value);
+void track_refcount_operation(RefcountOperation op, const void *address, int32_t value) {
+	switch(op) {
+	case RC_RELEASE:
+		track_refcount_release(address);
+		break;
+	case RC_DEC:
+	case RC_INC:
+	case RC_SET:
+		track_refcount_change(address, value);
+		break;
 	}
 }
+
+
 }
 
 
