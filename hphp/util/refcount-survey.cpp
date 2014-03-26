@@ -16,6 +16,10 @@
 
 #include "hphp/util/refcount-survey.h"
 #include "hphp/runtime/base/thread-init-fini.h"
+#include "folly/Synchronized.h"
+#include "folly/RWSpinLock.h"
+
+#include <array>
 
 namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,11 +31,8 @@ static InitFiniNode process_death (
   InitFiniNode::When::ProcessExit
 );
 
-// This currently doesn't actually work. Need a new way to do this.
-static InitFiniNode server_death (
-  []{ dump_refcount_survey(); },
-  InitFiniNode::When::ServerExit
-);
+//Global variable to track the total reference sizes
+folly::Synchronized<std::array<long, 31>, folly::RWSpinLock> global_counts;
 
 //Need to initialise it before we do anything
 //We don't actually do anything with this object
@@ -48,6 +49,60 @@ void dump_refcount_survey() {
 	survey().dump_refcount_survey();
 }
 
+void dump_global_survey() {
+	SYNCHRONIZED(global_counts) {
+		TRACE(1, "---Request ended. Total counts so far---\n\n");
+		long bitcounts[32] = {0};
+		int bc;
+
+		long total_bits = 0;
+		long total_count = 0;
+
+		TRACE(1, "Raw Sizes\n");
+		for(int i = 0; i < 32; i++) {
+			if (global_counts[i] > 0) {
+				FTRACE(1, "{}: {}\n", i, global_counts[i]);
+			}
+
+
+			bc = ceil(log2((double)i + 1));
+			bitcounts[bc] += global_counts[i];
+
+			total_bits += bc * global_counts[i];
+			total_count += global_counts[i];
+		}
+
+		double mean = (double)total_bits / total_count;
+
+		long half = total_count / 2;
+		long half_sum = 0;
+
+		double median;
+
+		for(int i = 0; i < 32; i++) {
+			half_sum += bitcounts[i];
+			if (half_sum > half) {
+				long pre = half_sum - bitcounts[i];
+				long diff = half - pre;
+				double proportion = (double)diff / bitcounts[i];
+				median = i - proportion;
+				break;
+			}
+		}
+
+		TRACE(1, "\nBits required\n");
+		for(int i = 0; i < 32; i++) {
+			if(bitcounts[i] > 0) {
+				FTRACE(1, "{}: {}\n", i, bitcounts[i]);
+			}
+		}
+
+		FTRACE(1, "Mean: {}\n", mean);
+		FTRACE(1, "Median: {}\n", median);
+	}
+
+}
+
 void RefcountSurvey::Create(void *storage) {
 	new (storage) RefcountSurvey();
 }
@@ -62,55 +117,13 @@ void RefcountSurvey::OnThreadExit(RefcountSurvey *survey) {
 }
 
 void RefcountSurvey::dump_refcount_survey() {
-	TRACE(1, "---Request Refcount survey statistics---\n\n");
-	long bitcounts[32] = {0};
-	int bc;
-
-	long total_bits = 0;
-	long total_count = 0;
-
-	TRACE(1, "Raw Sizes\n");
-	for(int i = 0; i < 32; i++) {
-		FTRACE(1, "{}: {}\n", i, sizecounts[i]);
-
-		bc = ceil(log2((double)i + 1));
-		bitcounts[bc] += sizecounts[i];
-
-		total_bits += bc * sizecounts[i];
-		total_count += sizecounts[i];
-	}
-
-	double mean = (double)total_bits / total_count;
-
-	long half = total_count / 2;
-	long half_sum = 0;
-
-	double median;
-
-	for(int i = 0; i < 32; i++) {
-		half_sum += bitcounts[i];
-		if (half_sum > half) {
-			long pre = half_sum - bitcounts[i];
-			long diff = half - pre;
-			double proportion = (double)diff / bitcounts[i];
-			median = i - proportion;
-			break;
+	SYNCHRONIZED(global_counts) {
+		for (int i = 0; i < 32; i++) {
+			global_counts[i] += sizecounts[i];
+			sizecounts[i] = 0;
 		}
 	}
-
-	TRACE(1, "\nBits required\n");
-	for(int i = 0; i < 32; i++) {
-		FTRACE(1, "{}: {}\n", i, bitcounts[i]);
-	}
-
-	FTRACE(1, "Mean: {}\n", mean);
-	FTRACE(1, "Median: {}\n", median);
-
-	//Reset the sizecounts
-	for(int i = 0; i < 32; i++) {
-		sizecounts[i] = 0;
-	}
-
+	dump_global_survey();
 }
 
 void RefcountSurvey::track_release(const void *address) {
