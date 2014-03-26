@@ -26,9 +26,13 @@ namespace HPHP {
  * Keep track of how large reference counts get.
  *
  */
-void track_refcount(const void *address, int32_t value);
-
-void track_refcount_release(const void *address);
+enum RefcountOperation {
+	RC_INC,
+	RC_DEC,
+	RC_RELEASE,
+	RC_SET
+};
+void track_refcount_operation(RefcountOperation op, const void *address, int32_t value = -1);
 
 void dump_refcount_survey();
 }
