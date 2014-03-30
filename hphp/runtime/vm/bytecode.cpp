@@ -7682,7 +7682,7 @@ void ExecutionContext::requestExit() {
     m_globalVarEnv = 0;
   }
 
-  dump_refcount_survey();
+  track_refcount_request_end();
 
   if (Logger::UseRequestLog) Logger::SetThreadHook(nullptr, nullptr);
 }
