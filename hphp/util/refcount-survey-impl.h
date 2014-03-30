@@ -14,32 +14,36 @@
    +----------------------------------------------------------------------+
 */
 
-#ifndef incl_HPHP_REFCOUNT_SURVEY_H_
-#define incl_HPHP_REFCOUNT_SURVEY_H_
+#ifndef incl_HPHP_REFCOUNT_SURVEY_IMPL_H_
+#define incl_HPHP_REFCOUNT_SURVEY_IMPL_H_
 
-#include <cstdlib>
-#include <boost/unordered_map.hpp>
-
-#include "hphp/util/thread-local.h"
-
+#include "hphp/util/refcount-survey.h"
 
 namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
 
-/*
- * Keep track of how large reference counts get.
- *
- */
-enum RefcountOperation {
-	RC_INC,
-	RC_DEC,
-	RC_RELEASE,
-	RC_SET
+
+struct RefcountSurvey;
+RefcountSurvey &survey();
+
+
+struct RefcountSurvey {
+	typedef ThreadLocalSingleton<RefcountSurvey> TlsWrapper;
+	static void Create(void*);
+	static void Delete(RefcountSurvey*);
+	static void OnThreadExit(RefcountSurvey*);
+public:
+	void track_refcount_operation(RefcountOperation op, const void *address, int32_t value);
+	void track_refcount_request_end();
+
+private:
+	long sizecounts[32] = {0};
+
+	boost::unordered_map<const void *, int> live_values;
+
+	void track_change(const void *address, int32_t value);
+	void track_release(const void *address);
 };
-
-void track_refcount_operation(RefcountOperation op, const void *address, int32_t value = -1);
-
-void track_refcount_request_end();
 
 }
 
