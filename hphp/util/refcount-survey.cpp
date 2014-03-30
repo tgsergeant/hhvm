@@ -14,7 +14,7 @@
    +----------------------------------------------------------------------+
 */
 
-#include "hphp/util/refcount-survey.h"
+#include "hphp/util/refcount-survey-impl.h"
 #include "hphp/runtime/base/thread-init-fini.h"
 #include "folly/Synchronized.h"
 #include "folly/RWSpinLock.h"
@@ -25,11 +25,6 @@ namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
 
 TRACE_SET_MOD(tmp1);
-
-static InitFiniNode process_death (
-  []{ dump_refcount_survey(); },
-  InitFiniNode::When::ProcessExit
-);
 
 //Global variable to track the total reference sizes
 folly::Synchronized<std::array<long, 31>, folly::RWSpinLock> global_counts;
@@ -45,8 +40,8 @@ void track_refcount_operation(RefcountOperation op, const void *address, int32_t
 	survey().track_refcount_operation(op, address, value);
 }
 
-void dump_refcount_survey() {
-	survey().dump_refcount_survey();
+void track_refcount_request_end() {
+	survey().track_refcount_request_end();
 }
 
 void dump_global_survey() {
@@ -116,7 +111,7 @@ void RefcountSurvey::OnThreadExit(RefcountSurvey *survey) {
 	survey->~RefcountSurvey();
 }
 
-void RefcountSurvey::dump_refcount_survey() {
+void RefcountSurvey::track_refcount_request_end() {
 	SYNCHRONIZED(global_counts) {
 		for (int i = 0; i < 32; i++) {
 			global_counts[i] += sizecounts[i];
