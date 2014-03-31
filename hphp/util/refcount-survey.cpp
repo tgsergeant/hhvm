@@ -115,10 +115,17 @@ void RefcountSurvey::track_refcount_request_end() {
 	SYNCHRONIZED(global_counts) {
 		for (int i = 0; i < 32; i++) {
 			global_counts[i] += sizecounts[i];
-			sizecounts[i] = 0;
 		}
 	}
 	dump_global_survey();
+
+	FTRACE(2, "---RELEASE TIMES---\n");
+	for (int i = 0; i < release_times.size(); i++) {
+		FTRACE(2, "{},", release_times[i]);
+	}
+	FTRACE(2, "\n");
+
+	reset();
 }
 
 void RefcountSurvey::track_release(const void *address) {
@@ -127,6 +134,12 @@ void RefcountSurvey::track_release(const void *address) {
 		sizecounts[live_value->second] += 1;
 		live_values.erase(live_value);
 	}
+	int bucket = total_ops / TIME_GRANULARITY;
+
+	if(release_times.size() <= bucket) {
+		release_times.push_back(0);
+	}
+	release_times[bucket] = release_times[bucket] + 1;
 }
 
 void RefcountSurvey::track_change(const void *address, int32_t value) {
@@ -149,6 +162,8 @@ void RefcountSurvey::track_change(const void *address, int32_t value) {
 }
 
 void RefcountSurvey::track_refcount_operation(RefcountOperation op, const void *address, int32_t value) {
+	total_ops ++;
+
 	switch(op) {
 	case RC_RELEASE:
 		track_release(address);
@@ -161,6 +176,14 @@ void RefcountSurvey::track_refcount_operation(RefcountOperation op, const void *
 	}
 }
 
+void RefcountSurvey::reset() {
+	for(int i = 0; i < 32; i++) {
+		sizecounts[i] = 0;
+	}
+	live_values.clear();
+	release_times.clear();
+	total_ops = 0;
+}
 
 }
 

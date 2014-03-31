@@ -26,6 +26,8 @@ namespace HPHP {
 struct RefcountSurvey;
 RefcountSurvey &survey();
 
+#define TIME_GRANULARITY 5000
+
 
 struct RefcountSurvey {
 	typedef ThreadLocalSingleton<RefcountSurvey> TlsWrapper;
@@ -38,11 +40,23 @@ public:
 
 private:
 	long sizecounts[32] = {0};
+	long total_ops = 0;
 
 	boost::unordered_map<const void *, int> live_values;
+	std::vector<int> release_times;
 
 	void track_change(const void *address, int32_t value);
+	/**
+	 * Record that a address has been released:
+	 *  - Remember the max value reached by this address
+	 *  - Mark that a release happened in the current time slot.
+	 */
 	void track_release(const void *address);
+
+	/**
+	 * Return this thread to its initial state at the end of a request
+	 */
+	void reset();
 };
 
 }
