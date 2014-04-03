@@ -26,7 +26,13 @@ namespace HPHP {
 struct RefcountSurvey;
 RefcountSurvey &survey();
 
-#define TIME_GRANULARITY 5000
+#define TIME_GRANULARITY 10000
+
+struct TimeDeltaActivity {
+	int deallocations;
+	int allocations;
+	long allocations_size;
+};
 
 
 struct RefcountSurvey {
@@ -43,7 +49,7 @@ private:
 	long total_ops = 0;
 
 	boost::unordered_map<const void *, int> live_values;
-	std::vector<int> release_times;
+	std::vector<TimeDeltaActivity> release_times;
 
 	void track_change(const void *address, int32_t value);
 	/**
@@ -52,6 +58,10 @@ private:
 	 *  - Mark that a release happened in the current time slot.
 	 */
 	void track_release(const void *address);
+
+	void track_alloc(const void *address, int32_t value);
+
+	TimeDeltaActivity *get_current_bucket();
 
 	/**
 	 * Return this thread to its initial state at the end of a request

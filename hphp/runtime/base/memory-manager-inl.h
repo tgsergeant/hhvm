@@ -22,6 +22,8 @@
 
 #include "hphp/util/compilation-flags.h"
 
+#include "hphp/util/refcount-survey.h"
+
 namespace HPHP {
 
 //////////////////////////////////////////////////////////////////////
@@ -212,6 +214,7 @@ inline void* MemoryManager::smartMallocSize(uint32_t bytes) {
   assert(reinterpret_cast<uintptr_t>(p) % 16 == 0);
 
   FTRACE(3, "smartMallocSize: {} -> {}\n", bytes, p);
+  track_refcount_operation(RC_ALLOC, p, bytes);
   return debugPostAllocate(p, bytes, bytes);
 }
 
@@ -238,6 +241,7 @@ std::pair<void*,size_t> MemoryManager::smartMallocSizeBig(size_t bytes) {
     smartMallocSizeBigHelper<callerSavesActualSize>(ptr, sz, bytes);
   FTRACE(3, "smartMallocBig: {} ({} requested, {} usable)\n",
          retptr, bytes, sz);
+  track_refcount_operation(RC_ALLOC, retptr, bytes);
   return std::make_pair(retptr, sz);
 #else
   m_stats.usage += bytes;
