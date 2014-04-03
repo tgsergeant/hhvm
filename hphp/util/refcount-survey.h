@@ -34,7 +34,8 @@ enum RefcountOperation {
 	RC_INC,
 	RC_DEC,
 	RC_RELEASE,
-	RC_SET
+	RC_SET,
+	RC_ALLOC
 };
 
 void track_refcount_operation(RefcountOperation op, const void *address, int32_t value = -1);
