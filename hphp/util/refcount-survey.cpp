@@ -119,12 +119,12 @@ void RefcountSurvey::track_refcount_request_end() {
 	}
 	dump_global_survey();
 
-	FTRACE(2, "---RELEASE TIMES---\n");
-	for (int i = 0; i < release_times.size(); i++) {
-		FTRACE(2, "{},", release_times[i]);
+	TRACE(2, "Releases,Allocations,Allocation Size\n");
+	for(int i = 0; i < release_times.size(); i++) {
+		auto r = release_times[i];
+		FTRACE(2, "{},{},{}\n", r.deallocations, r.allocations, r.allocations_size);
 	}
-	FTRACE(2, "\n");
-
+	FTRACE(2, "{},,\n", live_values.size());
 	reset();
 }
 
@@ -134,12 +134,7 @@ void RefcountSurvey::track_release(const void *address) {
 		sizecounts[live_value->second] += 1;
 		live_values.erase(live_value);
 	}
-	int bucket = total_ops / TIME_GRANULARITY;
-
-	if(release_times.size() <= bucket) {
-		release_times.push_back(0);
-	}
-	release_times[bucket] = release_times[bucket] + 1;
+	get_current_bucket()->deallocations += 1;
 }
 
 void RefcountSurvey::track_change(const void *address, int32_t value) {
@@ -173,7 +168,16 @@ void RefcountSurvey::track_refcount_operation(RefcountOperation op, const void *
 	case RC_SET:
 		track_change(address, value);
 		break;
+	case RC_ALLOC:
+		track_alloc(address, value);
+		break;
 	}
+}
+
+void RefcountSurvey::track_alloc(const void *address, int32_t value) {
+	TimeDeltaActivity *bucket = get_current_bucket();
+	bucket->allocations += 1;
+	bucket->allocations_size += value;
 }
 
 void RefcountSurvey::reset() {
@@ -183,6 +187,14 @@ void RefcountSurvey::reset() {
 	live_values.clear();
 	release_times.clear();
 	total_ops = 0;
+}
+
+TimeDeltaActivity *RefcountSurvey::get_current_bucket() {
+	int bucket = total_ops / TIME_GRANULARITY;
+	if(release_times.size() <= bucket) {
+			release_times.push_back(TimeDeltaActivity());
+		}
+	return &release_times[bucket];
 }
 
 }
