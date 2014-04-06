@@ -110,7 +110,7 @@ void dump_global_survey() {
 			}
 		}
 		TRACE(1, "\nTotal Objects,Total Bytes,Average Bytes\n");
-		FTRACE(1, "{},{},{:.1f}\n", total_objects, total_bytes, (double)total_bytes / total_objects);
+		FTRACE(1, "{},{},{:.1f}\n\n", total_objects, total_bytes, (double)total_bytes / total_objects);
 	}
 
 }
@@ -142,12 +142,12 @@ void RefcountSurvey::track_refcount_request_end() {
 	dump_global_survey();
 
 	TRACE(2, "Releases,Allocations,Allocation Size\n");
-	for(int i = 0; i < release_times.size(); i++) {
-		auto r = release_times[i];
+	for(int i = 0; i < timed_activity.size(); i++) {
+		auto r = timed_activity[i];
 		FTRACE(2, "{},{},{}\n", r.deallocations, r.allocations, r.allocations_size);
 	}
 	FTRACE(2, "{},,\n", live_values.size());
-	TRACE(3, "\n\nObject Sizes\n");
+	TRACE(3, "\n\nRequest Object Sizes\n");
 	for(int i = 0; i <= 128; i++) {
 		if(object_sizes[i] != 0) {
 			FTRACE(3, "{},{}\n", i << 4 , object_sizes[i]);
@@ -226,16 +226,16 @@ void RefcountSurvey::reset() {
 		object_sizes[i] = 0;
 	}
 	live_values.clear();
-	release_times.clear();
+	timed_activity.clear();
 	total_ops = 0;
 }
 
 TimeDeltaActivity *RefcountSurvey::get_current_bucket() {
 	int bucket = total_ops / TIME_GRANULARITY;
-	if(release_times.size() <= bucket) {
-			release_times.push_back(TimeDeltaActivity());
-		}
-	return &release_times[bucket];
+	if(timed_activity.size() <= bucket) {
+		timed_activity.push_back(TimeDeltaActivity());
+	}
+	return &timed_activity[bucket];
 }
 
 }
