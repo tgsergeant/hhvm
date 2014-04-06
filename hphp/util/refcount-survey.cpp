@@ -141,7 +141,14 @@ void RefcountSurvey::track_refcount_request_end() {
 	}
 	dump_global_survey();
 
-	TRACE(2, "Releases,Allocations,Allocation Size\n");
+	auto const stats = MM().getStats();
+	TRACE(1, "\nGeneral memory statistics\n");
+	FTRACE(1, "Peak usage,\t\t{}\n", stats.peakUsage);
+	FTRACE(1, "Peak allocation,\t{}\n", stats.peakAlloc);
+	FTRACE(1, "Total allocation,\t{}\n", stats.totalAlloc);\
+
+
+	TRACE(2, "\n\nReleases,Allocations,Allocation Size\n");
 	for(int i = 0; i < timed_activity.size(); i++) {
 		auto r = timed_activity[i];
 		FTRACE(2, "{},{},{}\n", r.deallocations, r.allocations, r.allocations_size);
