@@ -24,22 +24,32 @@ namespace HPHP {
 
 
 struct RefcountSurvey;
+/*
+ * Get the RefcountSurvey object for the current thread
+ */
 RefcountSurvey &survey();
 
 #define TIME_GRANULARITY 10000
 
+/*
+ * Track stuff that happens within one unit of time
+ * Where a unit of time is TIME_GRANULARITY operations
+ */
 struct TimeDeltaActivity {
 	int deallocations;
 	int allocations;
 	long allocations_size;
 };
 
+// Track data associated with a single object
 struct ObjectLifetimeData {
 	int max_refcount;
 	long allocation_time;
 };
 
-
+/*
+ * Thread-local survey data and operations
+ */
 struct RefcountSurvey {
 	typedef ThreadLocalSingleton<RefcountSurvey> TlsWrapper;
 	static void Create(void*);
@@ -47,14 +57,22 @@ struct RefcountSurvey {
 	static void OnThreadExit(RefcountSurvey*);
 public:
 	void track_refcount_operation(RefcountOperation op, const void *address, int32_t value);
+
 	void track_refcount_request_end();
 
 private:
+	// The number of dead objects which reached each refcount value
 	long refcount_sizes[32] = {0};
+	// 'Time' spent in this request so far
 	long total_ops = 0;
 
+	// Data about objects we know to be live in the heap
 	boost::unordered_map<const void *, ObjectLifetimeData> live_values;
-	std::vector<TimeDeltaActivity> release_times;
+
+	// Data for each time step
+	std::vector<TimeDeltaActivity> timed_activity;
+	// Number of objects in each size bucket (freelists)
+	// 'Large' objects are lumped into the 128th slot
 	long object_sizes[129] = {0};
 
 	void track_change(const void *address, int32_t value);
@@ -65,8 +83,16 @@ private:
 	 */
 	void track_release(const void *address);
 
+	/**
+	 * Record that an address has been allocated:
+	 * - Track this in timed_activity
+	 * - Track the object size
+	 */
 	void track_alloc(const void *address, int32_t value);
 
+	/**
+	 * Get or create a bucket for the current time slot
+	 */
 	TimeDeltaActivity *get_current_bucket();
 
 	/**
