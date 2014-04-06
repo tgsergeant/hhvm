@@ -34,6 +34,11 @@ struct TimeDeltaActivity {
 	long allocations_size;
 };
 
+struct ObjectLifetimeData {
+	int max_refcount;
+	long allocation_time;
+};
+
 
 struct RefcountSurvey {
 	typedef ThreadLocalSingleton<RefcountSurvey> TlsWrapper;
@@ -45,11 +50,12 @@ public:
 	void track_refcount_request_end();
 
 private:
-	long sizecounts[32] = {0};
+	long refcount_sizes[32] = {0};
 	long total_ops = 0;
 
-	boost::unordered_map<const void *, int> live_values;
+	boost::unordered_map<const void *, ObjectLifetimeData> live_values;
 	std::vector<TimeDeltaActivity> release_times;
+	long object_sizes[129] = {0};
 
 	void track_change(const void *address, int32_t value);
 	/**

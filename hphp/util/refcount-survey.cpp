@@ -27,7 +27,9 @@ namespace HPHP {
 TRACE_SET_MOD(tmp1);
 
 //Global variable to track the total reference sizes
-folly::Synchronized<std::array<long, 31>, folly::RWSpinLock> global_counts;
+folly::Synchronized<std::array<long, 31>, folly::RWSpinLock> global_refcount_sizes;
+
+folly::Synchronized<std::array<long, 129>, folly::RWSpinLock> global_object_sizes;
 
 //Need to initialise it before we do anything
 //We don't actually do anything with this object
@@ -45,7 +47,7 @@ void track_refcount_request_end() {
 }
 
 void dump_global_survey() {
-	SYNCHRONIZED(global_counts) {
+	SYNCHRONIZED_CONST(global_refcount_sizes) {
 		TRACE(1, "---Request ended. Total counts so far---\n\n");
 		long bitcounts[32] = {0};
 		int bc;
@@ -55,16 +57,16 @@ void dump_global_survey() {
 
 		TRACE(1, "Raw Sizes\n");
 		for(int i = 0; i < 32; i++) {
-			if (global_counts[i] > 0) {
-				FTRACE(1, "{}: {}\n", i, global_counts[i]);
+			if (global_refcount_sizes[i] > 0) {
+				FTRACE(1, "{},{}\n", i, global_refcount_sizes[i]);
 			}
 
 
 			bc = ceil(log2((double)i + 1));
-			bitcounts[bc] += global_counts[i];
+			bitcounts[bc] += global_refcount_sizes[i];
 
-			total_bits += bc * global_counts[i];
-			total_count += global_counts[i];
+			total_bits += bc * global_refcount_sizes[i];
+			total_count += global_refcount_sizes[i];
 		}
 
 		double mean = (double)total_bits / total_count;
@@ -88,12 +90,27 @@ void dump_global_survey() {
 		TRACE(1, "\nBits required\n");
 		for(int i = 0; i < 32; i++) {
 			if(bitcounts[i] > 0) {
-				FTRACE(1, "{}: {}\n", i, bitcounts[i]);
+				FTRACE(1, "{},{}\n", i, bitcounts[i]);
 			}
 		}
 
 		FTRACE(1, "Mean: {}\n", mean);
 		FTRACE(1, "Median: {}\n", median);
+	}
+
+	SYNCHRONIZED_CONST(global_object_sizes) {
+		TRACE(1, "\n\nObject sizes\n");
+		long total_bytes = 0;
+		long total_objects = 0;
+		for(int i = 0; i <= 128; i++) {
+			if(global_object_sizes[i] != 0) {
+				FTRACE(1, "{},{}\n", i << 4, global_object_sizes[i]);
+				total_bytes += (i << 4) * global_object_sizes[i];
+				total_objects += global_object_sizes[i];
+			}
+		}
+		TRACE(1, "\nTotal Objects,Total Bytes,Average Bytes\n");
+		FTRACE(1, "{},{},{:.1f}\n", total_objects, total_bytes, (double)total_bytes / total_objects);
 	}
 
 }
@@ -112,9 +129,14 @@ void RefcountSurvey::OnThreadExit(RefcountSurvey *survey) {
 }
 
 void RefcountSurvey::track_refcount_request_end() {
-	SYNCHRONIZED(global_counts) {
+	SYNCHRONIZED(global_refcount_sizes) {
 		for (int i = 0; i < 32; i++) {
-			global_counts[i] += sizecounts[i];
+			global_refcount_sizes[i] += refcount_sizes[i];
+		}
+	}
+	SYNCHRONIZED(global_object_sizes) {
+		for (int i = 0; i <= 128; i++) {
+			global_object_sizes[i] += object_sizes[i];
 		}
 	}
 	dump_global_survey();
@@ -125,13 +147,19 @@ void RefcountSurvey::track_refcount_request_end() {
 		FTRACE(2, "{},{},{}\n", r.deallocations, r.allocations, r.allocations_size);
 	}
 	FTRACE(2, "{},,\n", live_values.size());
+	TRACE(3, "\n\nObject Sizes\n");
+	for(int i = 0; i <= 128; i++) {
+		if(object_sizes[i] != 0) {
+			FTRACE(3, "{},{}\n", i << 4 , object_sizes[i]);
+		}
+	}
 	reset();
 }
 
 void RefcountSurvey::track_release(const void *address) {
 	auto live_value = live_values.find(address);
 	if(live_value != live_values.end()) {
-		sizecounts[live_value->second] += 1;
+		refcount_sizes[live_value->second.max_refcount] += 1;
 		live_values.erase(live_value);
 	}
 	get_current_bucket()->deallocations += 1;
@@ -147,11 +175,13 @@ void RefcountSurvey::track_change(const void *address, int32_t value) {
 
 	auto live_value = live_values.find(address);
 	if (live_value == live_values.end()) {
-		live_values[address] = value;
+		live_values[address] = ObjectLifetimeData();
+		live_values[address].allocation_time = total_ops;
+		live_values[address].max_refcount = value;
 	}
 	else {
-		if(live_value->second < value) {
-			live_values[address] = value;
+		if(live_value->second.max_refcount < value) {
+			live_values[address].max_refcount = value;
 		}
 	}
 }
@@ -178,11 +208,22 @@ void RefcountSurvey::track_alloc(const void *address, int32_t value) {
 	TimeDeltaActivity *bucket = get_current_bucket();
 	bucket->allocations += 1;
 	bucket->allocations_size += value;
+
+	int size;
+	if(value < 2048) {
+		size = ((value + 8) & ~15) >> 4;
+	} else {
+		size = 128;
+	}
+	object_sizes[size] += 1;
 }
 
 void RefcountSurvey::reset() {
 	for(int i = 0; i < 32; i++) {
-		sizecounts[i] = 0;
+		refcount_sizes[i] = 0;
+	}
+	for(int i = 0; i < 32; i++) {
+		object_sizes[i] = 0;
 	}
 	live_values.clear();
 	release_times.clear();
