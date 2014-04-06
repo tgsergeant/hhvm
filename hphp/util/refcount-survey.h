@@ -26,10 +26,7 @@
 namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
 
-/*
- * Keep track of how large reference counts get.
- *
- */
+
 enum RefcountOperation {
 	RC_INC,
 	RC_DEC,
@@ -38,8 +35,15 @@ enum RefcountOperation {
 	RC_ALLOC
 };
 
+/*
+ * Main helper method. Passes the data through to the ThreadLocalSingleton,
+ * which then chooses how to proceed based on the operation
+ */
 void track_refcount_operation(RefcountOperation op, const void *address, int32_t value = -1);
-
+/*
+ * Mark the current request as ended. Print results, add to global counters
+ * and clear everything out in preparation for the next request
+ */
 void track_refcount_request_end();
 
 }
