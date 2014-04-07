@@ -14,38 +14,72 @@
    +----------------------------------------------------------------------+
 */
 
-#ifndef incl_HPHP_REFCOUNT_SURVEY_H_
-#define incl_HPHP_REFCOUNT_SURVEY_H_
+#ifndef incl_HPHP_HISTOGRAM_H_
+#define incl_HPHP_HISTOGRAM_H_
 
-#include <cstdlib>
-#include <boost/unordered_map.hpp>
-
-#include "hphp/util/thread-local.h"
-
+#include <array>
+#include <string>
 
 namespace HPHP {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+template<size_t N>
+class Histogram {
+public:
+	Histogram() {
+		clear();
+	}
 
-enum RefcountOperation {
-	RC_INC,
-	RC_DEC,
-	RC_RELEASE,
-	RC_SET,
-	RC_ALLOC
+	long get(int bucket) const {
+		return data[bucket];
+	}
+
+	void add(int bucket, long amount) {
+		data[bucket] += amount;
+	}
+
+	void incr(int bucket) {
+		data[bucket] += 1;
+	}
+
+	void set(int bucket, long amount) {
+		data[bucket] = amount;
+	}
+
+	void add(const Histogram<N> other) {
+		for(int i = 0; i < N; i++) {
+			data[i] += other.get(i);
+		}
+	}
+
+	void clear() {
+		for(int i = 0; i < N; i++) {
+			data[i] = 0;
+		}
+	}
+
+	size_t size() {
+		return N;
+	}
+
+	std::string print(bool showZeros = false, int index_mult = 1) const {
+		std::stringstream str;
+		for(int i = 0; i < N; i++) {
+			if(showZeros || data[i] != 0) {
+				str << i * index_mult << "," << data[i] << '\n';
+			}
+		}
+		return str.str();
+	}
+
+	long operator[](size_t pos) const {
+		return data[pos];
+	}
+
+private:
+	std::array<long, N> data;
 };
-
-/*
- * Main helper method. Passes the data through to the ThreadLocalSingleton,
- * which then chooses how to proceed based on the operation
- */
-void track_refcount_operation(RefcountOperation op, const void *address, int32_t value = -1);
-/*
- * Mark the current request as ended. Print results, add to global counters
- * and clear everything out in preparation for the next request
- */
-void track_refcount_request_end();
 
 ///////////////////////////////////////////////////////////////////////////////
 
