@@ -14,42 +14,13 @@
    +----------------------------------------------------------------------+
 */
 
-#ifndef incl_HPHP_REFCOUNT_SURVEY_H_
-#define incl_HPHP_REFCOUNT_SURVEY_H_
-
-#include <cstdlib>
-#include <boost/unordered_map.hpp>
-
-#include "hphp/util/thread-local.h"
-
+#include "hphp/util/histogram.h"
 
 namespace HPHP {
 
 ///////////////////////////////////////////////////////////////////////////////
 
 
-enum RefcountOperation {
-	RC_INC,
-	RC_DEC,
-	RC_RELEASE,
-	RC_SET,
-	RC_ALLOC
-};
-
-/*
- * Main helper method. Passes the data through to the ThreadLocalSingleton,
- * which then chooses how to proceed based on the operation
- */
-void track_refcount_operation(RefcountOperation op, const void *address, int32_t value = -1);
-/*
- * Mark the current request as ended. Print results, add to global counters
- * and clear everything out in preparation for the next request
- */
-void track_refcount_request_end();
-
 ///////////////////////////////////////////////////////////////////////////////
 
 }
-
-
-#endif
