@@ -18,6 +18,7 @@
 #define incl_HPHP_REFCOUNT_SURVEY_IMPL_H_
 
 #include "hphp/util/refcount-survey.h"
+#include "hphp/util/histogram.h"
 
 namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
@@ -61,8 +62,6 @@ public:
 	void track_refcount_request_end();
 
 private:
-	// The number of dead objects which reached each refcount value
-	long refcount_sizes[32] = {0};
 	// 'Time' spent in this request so far
 	long total_ops = 0;
 
@@ -71,9 +70,13 @@ private:
 
 	// Data for each time step
 	std::vector<TimeDeltaActivity> timed_activity;
+
+	// The number of dead objects which reached each refcount value
+	Histogram<32> refcount_sizes;
+
 	// Number of objects in each size bucket (freelists)
 	// 'Large' objects are lumped into the 128th slot
-	long object_sizes[129] = {0};
+	Histogram<129> object_sizes;
 
 	void track_change(const void *address, int32_t value);
 	/**

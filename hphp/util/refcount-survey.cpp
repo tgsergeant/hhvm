@@ -22,14 +22,15 @@
 #include <array>
 
 namespace HPHP {
+
 ///////////////////////////////////////////////////////////////////////////////
 
-TRACE_SET_MOD(tmp1);
+TRACE_SET_MOD(rcsurvey);
 
 //Global variable to track the total reference sizes
-folly::Synchronized<std::array<long, 31>, folly::RWSpinLock> global_refcount_sizes;
+folly::Synchronized<Histogram<32>, folly::RWSpinLock> global_refcount_sizes;
 
-folly::Synchronized<std::array<long, 129>, folly::RWSpinLock> global_object_sizes;
+folly::Synchronized<Histogram<129>, folly::RWSpinLock> global_object_sizes;
 
 //Need to initialise it before we do anything
 //We don't actually do anything with this object
@@ -56,12 +57,8 @@ void dump_global_survey() {
 		long total_count = 0;
 
 		TRACE(1, "Raw Sizes\n");
+		TRACE(1, global_refcount_sizes.print());
 		for(int i = 0; i < 32; i++) {
-			if (global_refcount_sizes[i] > 0) {
-				FTRACE(1, "{},{}\n", i, global_refcount_sizes[i]);
-			}
-
-
 			bc = ceil(log2((double)i + 1));
 			bitcounts[bc] += global_refcount_sizes[i];
 
@@ -130,14 +127,10 @@ void RefcountSurvey::OnThreadExit(RefcountSurvey *survey) {
 
 void RefcountSurvey::track_refcount_request_end() {
 	SYNCHRONIZED(global_refcount_sizes) {
-		for (int i = 0; i < 32; i++) {
-			global_refcount_sizes[i] += refcount_sizes[i];
-		}
+		global_refcount_sizes.add(refcount_sizes);
 	}
 	SYNCHRONIZED(global_object_sizes) {
-		for (int i = 0; i <= 128; i++) {
-			global_object_sizes[i] += object_sizes[i];
-		}
+		global_object_sizes.add(object_sizes);
 	}
 	dump_global_survey();
 
@@ -154,19 +147,17 @@ void RefcountSurvey::track_refcount_request_end() {
 		FTRACE(2, "{},{},{}\n", r.deallocations, r.allocations, r.allocations_size);
 	}
 	FTRACE(2, "{},,\n", live_values.size());
+
 	TRACE(3, "\n\nRequest Object Sizes\n");
-	for(int i = 0; i <= 128; i++) {
-		if(object_sizes[i] != 0) {
-			FTRACE(3, "{},{}\n", i << 4 , object_sizes[i]);
-		}
-	}
+	TRACE(3, object_sizes.print(false, 16));
 	reset();
 }
+
 
 void RefcountSurvey::track_release(const void *address) {
 	auto live_value = live_values.find(address);
 	if(live_value != live_values.end()) {
-		refcount_sizes[live_value->second.max_refcount] += 1;
+		refcount_sizes.incr(live_value->second.max_refcount);
 		live_values.erase(live_value);
 	}
 	get_current_bucket()->deallocations += 1;
@@ -222,16 +213,12 @@ void RefcountSurvey::track_alloc(const void *address, int32_t value) {
 	} else {
 		size = 128;
 	}
-	object_sizes[size] += 1;
+	object_sizes.incr(size);
 }
 
 void RefcountSurvey::reset() {
-	for(int i = 0; i < 32; i++) {
-		refcount_sizes[i] = 0;
-	}
-	for(int i = 0; i < 32; i++) {
-		object_sizes[i] = 0;
-	}
+	refcount_sizes.clear();
+	object_sizes.clear();
 	live_values.clear();
 	timed_activity.clear();
 	total_ops = 0;
@@ -245,6 +232,7 @@ TimeDeltaActivity *RefcountSurvey::get_current_bucket() {
 	return &timed_activity[bucket];
 }
 
-}
+///////////////////////////////////////////////////////////////////////////////
 
+}
 
