@@ -31,6 +31,8 @@ struct RefcountSurvey;
 RefcountSurvey &survey();
 
 #define TIME_GRANULARITY 10000
+#define LIFETIME_GRANULARITY 5000
+
 
 /*
  * Track stuff that happens within one unit of time
@@ -78,6 +80,8 @@ private:
 	// 'Large' objects are lumped into the 128th slot
 	Histogram<129> object_sizes;
 
+	Histogram<250> object_lifetimes;
+
 	void track_change(const void *address, int32_t value);
 	/**
 	 * Record that a address has been released:
@@ -92,6 +96,8 @@ private:
 	 * - Track the object size
 	 */
 	void track_alloc(const void *address, int32_t value);
+
+	void increment_lifetime_bucket(long allocation_time);
 
 	/**
 	 * Get or create a bucket for the current time slot
