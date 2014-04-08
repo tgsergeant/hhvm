@@ -19,6 +19,7 @@
 
 #include <array>
 #include <string>
+#include <sstream>
 
 namespace HPHP {
 
@@ -40,7 +41,9 @@ public:
 	}
 
 	void incr(int bucket) {
-		data[bucket] += 1;
+		if(bucket >= 0 && bucket < N) {
+			data[bucket] += 1;
+		}
 	}
 
 	void set(int bucket, long amount) {

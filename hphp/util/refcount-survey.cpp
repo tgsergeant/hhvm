@@ -49,14 +49,15 @@ void track_refcount_request_end() {
 
 void dump_global_survey() {
 	SYNCHRONIZED_CONST(global_refcount_sizes) {
-		TRACE(1, "---Request ended. Total counts so far---\n\n");
+
 		long bitcounts[32] = {0};
 		int bc;
 
 		long total_bits = 0;
 		long total_count = 0;
 
-		TRACE(1, "Raw Sizes\n");
+		TRACE(1, "\n\nRaw Refcount Sizes (across all requests)\n");
+		TRACE(1, "Size,Frequency\n");
 		TRACE(1, global_refcount_sizes.print());
 		for(int i = 0; i < 32; i++) {
 			bc = ceil(log2((double)i + 1));
@@ -84,7 +85,8 @@ void dump_global_survey() {
 			}
 		}
 
-		TRACE(1, "\nBits required\n");
+		TRACE(1, "\n\nRefcount Bits required\n");
+		TRACE(1, "Bits,Frequency\n");
 		for(int i = 0; i < 32; i++) {
 			if(bitcounts[i] > 0) {
 				FTRACE(1, "{},{}\n", i, bitcounts[i]);
@@ -96,18 +98,19 @@ void dump_global_survey() {
 	}
 
 	SYNCHRONIZED_CONST(global_object_sizes) {
-		TRACE(1, "\n\nObject sizes\n");
+		TRACE(1, "\n\nObject sizes (across all requests)\n");
+		TRACE(1, "Size,Frequency\n");
 		long total_bytes = 0;
 		long total_objects = 0;
 		for(int i = 0; i <= 128; i++) {
 			if(global_object_sizes[i] != 0) {
-				FTRACE(1, "{},{}\n", i << 4, global_object_sizes[i]);
+				FTRACE(2, "{},{}\n", i << 4, global_object_sizes[i]);
 				total_bytes += (i << 4) * global_object_sizes[i];
 				total_objects += global_object_sizes[i];
 			}
 		}
-		TRACE(1, "\nTotal Objects,Total Bytes,Average Bytes\n");
-		FTRACE(1, "{},{},{:.1f}\n\n", total_objects, total_bytes, (double)total_bytes / total_objects);
+		TRACE(2, "\nTotal Objects,Total Bytes,Average Bytes\n");
+		FTRACE(2, "{},{},{:.1f}\n\n", total_objects, total_bytes, (double)total_bytes / total_objects);
 	}
 
 }
@@ -126,30 +129,51 @@ void RefcountSurvey::OnThreadExit(RefcountSurvey *survey) {
 }
 
 void RefcountSurvey::track_refcount_request_end() {
+	//Processing that needs to be done before we print results
 	SYNCHRONIZED(global_refcount_sizes) {
 		global_refcount_sizes.add(refcount_sizes);
 	}
 	SYNCHRONIZED(global_object_sizes) {
 		global_object_sizes.add(object_sizes);
 	}
-	dump_global_survey();
-
-	auto const stats = MM().getStats();
-	TRACE(1, "\nGeneral memory statistics\n");
-	FTRACE(1, "Peak usage,\t\t{}\n", stats.peakUsage);
-	FTRACE(1, "Peak allocation,\t{}\n", stats.peakAlloc);
-	FTRACE(1, "Total allocation,\t{}\n", stats.totalAlloc);\
-
-
-	TRACE(2, "\n\nReleases,Allocations,Allocation Size\n");
-	for(int i = 0; i < timed_activity.size(); i++) {
-		auto r = timed_activity[i];
-		FTRACE(2, "{},{},{}\n", r.deallocations, r.allocations, r.allocations_size);
+	for(auto obj : live_values) {
+		increment_lifetime_bucket(obj.second.allocation_time);
 	}
-	FTRACE(2, "{},,\n", live_values.size());
 
-	TRACE(3, "\n\nRequest Object Sizes\n");
-	TRACE(3, object_sizes.print(false, 16));
+	// Then print the results (but only if the request was something interesting)
+	if(total_ops > 15000) {
+		TRACE(1, "\n-----Start of report-----\n");
+
+		auto const stats = MM().getStats();
+		TRACE(1, "\n\nGeneral memory statistics\n");
+		FTRACE(1, "Peak usage,\t\t{}\n", stats.peakUsage);
+		FTRACE(1, "Peak allocation,\t{}\n", stats.peakAlloc);
+		FTRACE(1, "Total allocation,\t{}\n", stats.totalAlloc);
+
+		dump_global_survey();
+
+		TRACE(2, "\n\nMemory activity over time\n");
+		TRACE(2, "Timeslot,Releases,Allocations,Allocation Size\n");
+		for(int i = 0; i < timed_activity.size(); i++) {
+			auto r = timed_activity[i];
+			FTRACE(2, "{},{},{},{}\n", i + 1, r.deallocations, r.allocations, r.allocations_size);
+		}
+		FTRACE(2, "{},{},,\n", timed_activity.size() + 1, live_values.size());
+
+
+		TRACE(2, "\n\nObject lifetimes\n");
+		TRACE(2, "Time bucket,Frequency\n");
+		TRACE(2, object_lifetimes.print(false, LIFETIME_GRANULARITY));
+		FTRACE(2, "\nTotal operations: {}\n", total_ops);
+
+		TRACE(3, "\n\nRequest Object Sizes\n");
+		TRACE(3, "Size,Frequency\n");
+		TRACE(3, object_sizes.print(false, 16));
+
+
+		TRACE(1, "\n-----End of report-----\n\n");
+	}
+
 	reset();
 }
 
@@ -158,10 +182,12 @@ void RefcountSurvey::track_release(const void *address) {
 	auto live_value = live_values.find(address);
 	if(live_value != live_values.end()) {
 		refcount_sizes.incr(live_value->second.max_refcount);
+		increment_lifetime_bucket(live_value->second.allocation_time);
 		live_values.erase(live_value);
 	}
 	get_current_bucket()->deallocations += 1;
 }
+
 
 void RefcountSurvey::track_change(const void *address, int32_t value) {
 	if (value > 31) {
@@ -216,10 +242,20 @@ void RefcountSurvey::track_alloc(const void *address, int32_t value) {
 	object_sizes.incr(size);
 }
 
+void RefcountSurvey::increment_lifetime_bucket(long allocation_time) {
+	long lifetime = total_ops - allocation_time;
+	int lifetime_bucket = (int)((double)lifetime / LIFETIME_GRANULARITY);
+	if(lifetime_bucket > object_lifetimes.size()) {
+		lifetime_bucket = object_lifetimes.size() - 1;
+	}
+	object_lifetimes.incr(lifetime_bucket);
+}
+
 void RefcountSurvey::reset() {
 	refcount_sizes.clear();
 	object_sizes.clear();
 	live_values.clear();
+	object_lifetimes.clear();
 	timed_activity.clear();
 	total_ops = 0;
 }
