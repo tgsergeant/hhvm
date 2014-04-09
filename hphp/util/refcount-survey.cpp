@@ -92,7 +92,7 @@ void dump_global_survey() {
 				FTRACE(1, "{},{}\n", i, bitcounts[i]);
 			}
 		}
-
+		TRACE(1, "\n");
 		FTRACE(1, "Mean: {}\n", mean);
 		FTRACE(1, "Median: {}\n", median);
 	}
@@ -152,8 +152,7 @@ void RefcountSurvey::track_refcount_request_end() {
 
 		dump_global_survey();
 
-		TRACE(2, "\n\nMemory activity over time\n");
-		TRACE(2, "Timeslot,Releases,Allocations,Allocation Size\n");
+		TRACE(2, "\n\nMemory activity over time\nTimeslot,Releases,Allocations,Allocation Size\n");
 		for(int i = 0; i < timed_activity.size(); i++) {
 			auto r = timed_activity[i];
 			FTRACE(2, "{},{},{},{}\n", i + 1, r.deallocations, r.allocations, r.allocations_size);
@@ -244,7 +243,7 @@ void RefcountSurvey::track_alloc(const void *address, int32_t value) {
 
 void RefcountSurvey::increment_lifetime_bucket(long allocation_time) {
 	long lifetime = total_ops - allocation_time;
-	int lifetime_bucket = (int)((double)lifetime / LIFETIME_GRANULARITY);
+	int lifetime_bucket = (int)((double)lifetime / LIFETIME_GRANULARITY) + 1;
 	if(lifetime_bucket > object_lifetimes.size()) {
 		lifetime_bucket = object_lifetimes.size() - 1;
 	}
