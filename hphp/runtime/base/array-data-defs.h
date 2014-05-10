@@ -197,7 +197,7 @@ inline const Variant& ArrayData::getValueRef(ssize_t pos) const {
 
 inline bool ArrayData::noCopyOnWrite() const {
   // NameValueTableWrapper doesn't support COW.
-  return m_kind == kNvtwKind;
+  return true;
 }
 
 inline bool ArrayData::isVectorData() const {
