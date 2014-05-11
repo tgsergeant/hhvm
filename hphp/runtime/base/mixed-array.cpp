@@ -1601,9 +1601,7 @@ ArrayData* MixedArray::ArrayPlusEqGeneric(ArrayData* ad,
 ArrayData* MixedArray::PlusEq(ArrayData* ad, const ArrayData* elems) {
   auto const neededSize = ad->size() + elems->size();
 
-  auto ret =
-    ad->hasMultipleRefs() ? CopyReserve(asMixed(ad), neededSize) :
-    asMixed(ad);
+  auto ret = asMixed(ad);
 
   if (UNLIKELY(!elems->isMixed())) {
     return ArrayPlusEqGeneric(ad, ret, elems, neededSize);
@@ -1699,7 +1697,6 @@ ArrayData* MixedArray::Merge(ArrayData* ad, const ArrayData* elems) {
 
 ArrayData* MixedArray::Pop(ArrayData* ad, Variant& value) {
   auto a = asMixed(ad);
-  if (a->hasMultipleRefs()) a = a->copyMixed();
   auto elms = a->data();
   ssize_t pos = IterEnd(a);
   if (validPos(pos)) {
@@ -1721,7 +1718,6 @@ ArrayData* MixedArray::Pop(ArrayData* ad, Variant& value) {
 
 ArrayData* MixedArray::Dequeue(ArrayData* adInput, Variant& value) {
   auto a = asMixed(adInput);
-  if (a->hasMultipleRefs()) a = a->copyMixed();
   // To conform to PHP behavior, we invalidate all strong iterators when an
   // element is removed from the beginning of the array.
   if (UNLIKELY(strong_iterators_exist())) {
@@ -1750,7 +1746,6 @@ ArrayData* MixedArray::Prepend(ArrayData* adInput,
                               const Variant& v,
                               bool copy) {
   auto a = asMixed(adInput);
-  if (a->hasMultipleRefs()) a = a->copyMixedAndResizeIfNeeded();
 
   // To conform to PHP behavior, we invalidate all strong iterators when an
   // element is added to the beginning of the array.

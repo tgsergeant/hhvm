@@ -709,7 +709,7 @@ static void adjustMArrayIter(ArrayData* ad, ssize_t pos) {
 ArrayData* PackedArray::Pop(ArrayData* adIn, Variant& value) {
   assert(checkInvariants(adIn));
 
-  auto const ad = adIn->hasMultipleRefs() ? Copy(adIn) : adIn;
+  auto const ad = adIn;
 
   if (UNLIKELY(ad->m_size == 0)) {
     value = uninit_null();
@@ -734,7 +734,7 @@ ArrayData* PackedArray::Pop(ArrayData* adIn, Variant& value) {
 ArrayData* PackedArray::Dequeue(ArrayData* adIn, Variant& value) {
   assert(checkInvariants(adIn));
 
-  auto const ad = adIn->hasMultipleRefs() ? Copy(adIn) : adIn;
+  auto const ad = adIn;
   // To conform to PHP behavior, we invalidate all strong iterators when an
   // element is removed from the beginning of the array.
   if (UNLIKELY(strong_iterators_exist())) {
@@ -763,8 +763,7 @@ ArrayData* PackedArray::Prepend(ArrayData* adIn,
                                 bool copy) {
   assert(checkInvariants(adIn));
 
-  auto const ad = adIn->hasMultipleRefs() ? CopyAndResizeIfNeeded(adIn)
-                                          : ResizeIfNeeded(adIn);
+  auto const ad = ResizeIfNeeded(adIn);
   // To conform to PHP behavior, we invalidate all strong iterators when an
   // element is added to the beginning of the array.
   if (UNLIKELY(strong_iterators_exist())) {

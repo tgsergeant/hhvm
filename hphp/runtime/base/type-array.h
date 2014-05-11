@@ -401,7 +401,7 @@ public:
   template<typename T>
   void removeImpl(const T& key) {
     if (m_px) {
-      ArrayData* escalated = m_px->remove(key, (m_px->hasMultipleRefs()));
+      ArrayData* escalated = m_px->remove(key, false);
       if (escalated != m_px) ArrayBase::operator=(escalated);
     }
   }

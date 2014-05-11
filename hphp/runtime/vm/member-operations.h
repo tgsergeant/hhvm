@@ -901,8 +901,7 @@ template <bool setResult, KeyType keyType>
 inline void SetElemArray(TypedValue* base, key_type<keyType> key,
                          Cell* value) {
   ArrayData* a = base->m_data.parr;
-  bool copy = (a->hasMultipleRefs())
-    || (value->m_type == KindOfArray && value->m_data.parr == a);
+  bool copy = false;
 
   auto* newData = SetElemArrayPre<setResult>(a, key, value, copy);
 
@@ -1010,8 +1009,7 @@ inline void SetNewElemString(TypedValue* base, Cell* value) {
  */
 inline void SetNewElemArray(TypedValue* base, Cell* value) {
   ArrayData* a = base->m_data.parr;
-  bool copy = (a->hasMultipleRefs())
-    || (value->m_type == KindOfArray && value->m_data.parr == a);
+  bool copy = false;
   ArrayData* a2 = a->append(cellAsCVarRef(*value), copy);
   if (a2 != a) {
     a2->incRefCount();
