@@ -1126,7 +1126,7 @@ static Variant iter_op_impl(VRefParam refParam, OpPtr op, NonArrayRet nonArray,
 
   auto ad = cell.m_data.parr;
   auto constexpr doCow = !std::is_same<DoCow, NoCow>::value;
-  if (doCow && ad->hasMultipleRefs() && !(ad->*pred)() &&
+  if (doCow && !(ad->*pred)() &&
       !ad->noCopyOnWrite()) {
     ad = ad->copy();
     cellSet(make_tv<KindOfArray>(ad), cell);
