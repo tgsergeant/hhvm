@@ -750,35 +750,22 @@ inline StringData* SetElemString(TypedValue* base, key_type<keyType> key,
   }
 
   // Create and save the result.
-  if (x >= 0 && x < baseLen && !base->m_data.pstr->hasMultipleRefs()) {
-    // Modify base in place.  This is safe because the LHS owns the
-    // only reference.
-    auto const oldp = base->m_data.pstr;
-    auto const newp = oldp->modifyChar(x, y[0]);
-    if (UNLIKELY(newp != oldp)) {
-      newp->incRefCount();
-      decRefStr(oldp);
-      base->m_data.pstr = newp;
-      base->m_type = KindOfString;
-    }
-  } else {
-    StringData* sd = StringData::Make(slen);
-    char* s = sd->bufferSlice().ptr;
-    memcpy(s, base->m_data.pstr->data(), baseLen);
-    if (x > baseLen) {
-      memset(&s[baseLen], ' ', slen - baseLen - 1);
-    }
-    s[x] = y[0];
-    sd->setSize(slen);
-    sd->incRefCount();
-    decRefStr(base->m_data.pstr);
-    base->m_data.pstr = sd;
-    base->m_type = KindOfString;
+  StringData* sd = StringData::Make(slen);
+  char* s = sd->bufferSlice().ptr;
+  memcpy(s, base->m_data.pstr->data(), baseLen);
+  if (x > baseLen) {
+    memset(&s[baseLen], ' ', slen - baseLen - 1);
   }
-
-  StringData* sd = StringData::Make(y, strlen(y), CopyString);
+  s[x] = y[0];
+  sd->setSize(slen);
   sd->incRefCount();
-  return sd;
+  decRefStr(base->m_data.pstr);
+  base->m_data.pstr = sd;
+  base->m_type = KindOfString;
+
+  StringData* sd2 = StringData::Make(y, strlen(y), CopyString);
+  sd2->incRefCount();
+  return sd2;
 }
 
 /**
@@ -901,8 +888,7 @@ template <bool setResult, KeyType keyType>
 inline void SetElemArray(TypedValue* base, key_type<keyType> key,
                          Cell* value) {
   ArrayData* a = base->m_data.parr;
-  bool copy = (a->hasMultipleRefs())
-    || (value->m_type == KindOfArray && value->m_data.parr == a);
+  bool copy = true;
 
   auto* newData = SetElemArrayPre<setResult>(a, key, value, copy);
 
@@ -1010,8 +996,7 @@ inline void SetNewElemString(TypedValue* base, Cell* value) {
  */
 inline void SetNewElemArray(TypedValue* base, Cell* value) {
   ArrayData* a = base->m_data.parr;
-  bool copy = (a->hasMultipleRefs())
-    || (value->m_type == KindOfArray && value->m_data.parr == a);
+  bool copy = true;
   ArrayData* a2 = a->append(cellAsCVarRef(*value), copy);
   if (a2 != a) {
     a2->incRefCount();
@@ -1514,7 +1499,7 @@ inline ArrayData* UnsetElemArrayPre(ArrayData* a, TypedValue key,
 template <KeyType keyType>
 inline void UnsetElemArray(TypedValue* base, key_type<keyType> key) {
   ArrayData* a = base->m_data.parr;
-  bool copy = a->hasMultipleRefs();
+  bool copy = true;
   ArrayData* a2 = UnsetElemArrayPre(a, key, copy);
 
   if (a2 != a) {

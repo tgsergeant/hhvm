@@ -2110,7 +2110,7 @@ static inline typename ShuffleReturn<setRef>::return_type arraySetImpl(
     const Variant& value, RefData* ref) {
   static_assert(keyType != KeyType::Any,
                 "KeyType::Any is not supported in arraySetMImpl");
-  const bool copy = a->hasMultipleRefs();
+  const bool copy = true;
   ArrayData* ret = checkForInt ? checkedSet(a, key, value, copy)
                                : a->set(key, value, copy);
 

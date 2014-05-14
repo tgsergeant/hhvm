@@ -709,7 +709,7 @@ static void adjustMArrayIter(ArrayData* ad, ssize_t pos) {
 ArrayData* PackedArray::Pop(ArrayData* adIn, Variant& value) {
   assert(checkInvariants(adIn));
 
-  auto const ad = adIn->hasMultipleRefs() ? Copy(adIn) : adIn;
+  auto const ad = Copy(adIn);
 
   if (UNLIKELY(ad->m_size == 0)) {
     value = uninit_null();
@@ -734,7 +734,7 @@ ArrayData* PackedArray::Pop(ArrayData* adIn, Variant& value) {
 ArrayData* PackedArray::Dequeue(ArrayData* adIn, Variant& value) {
   assert(checkInvariants(adIn));
 
-  auto const ad = adIn->hasMultipleRefs() ? Copy(adIn) : adIn;
+  auto const ad = Copy(adIn);
   // To conform to PHP behavior, we invalidate all strong iterators when an
   // element is removed from the beginning of the array.
   if (UNLIKELY(strong_iterators_exist())) {
@@ -763,8 +763,7 @@ ArrayData* PackedArray::Prepend(ArrayData* adIn,
                                 bool copy) {
   assert(checkInvariants(adIn));
 
-  auto const ad = adIn->hasMultipleRefs() ? CopyAndResizeIfNeeded(adIn)
-                                          : ResizeIfNeeded(adIn);
+  auto const ad = CopyAndResizeIfNeeded(adIn);
   // To conform to PHP behavior, we invalidate all strong iterators when an
   // element is added to the beginning of the array.
   if (UNLIKELY(strong_iterators_exist())) {
@@ -863,19 +862,6 @@ ArrayData* MixedArray::AddNewElemC(ArrayData* ad, TypedValue value) {
 
   if (LIKELY(ad->isPacked())) {
     assert(PackedArray::checkInvariants(ad));
-    if (LIKELY(ad->m_pos >= 0) &&
-        LIKELY(!ad->hasMultipleRefs())) {
-      int64_t const k = ad->m_size;
-      if (LIKELY(k < ad->m_packedCap)) {
-        auto& tv = packedData(ad)[k];
-        // TODO(#3888164): this KindOfUninit check is almost certainly
-        // unnecessary, but it was here so it hasn't been removed yet.
-        tv.m_type = value.m_type == KindOfUninit ? KindOfNull : value.m_type;
-        tv.m_data = value.m_data;
-        ad->m_size = k + 1;
-        return ad;
-      }
-    }
   }
 
   return genericAddNewElemC(ad, value);

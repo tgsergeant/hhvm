@@ -401,7 +401,7 @@ public:
   template<typename T>
   void removeImpl(const T& key) {
     if (m_px) {
-      ArrayData* escalated = m_px->remove(key, (m_px->hasMultipleRefs()));
+      ArrayData* escalated = m_px->remove(key, true);
       if (escalated != m_px) ArrayBase::operator=(escalated);
     }
   }
@@ -410,7 +410,7 @@ public:
   Variant& lvalAtImpl(const T& key, ACCESSPARAMS_DECL) {
     if (!m_px) ArrayBase::operator=(ArrayData::Create());
     Variant* ret = nullptr;
-    ArrayData* escalated = m_px->lval(key, ret, m_px->hasMultipleRefs());
+    ArrayData* escalated = m_px->lval(key, ret, true);
     if (escalated != m_px) ArrayBase::operator=(escalated);
     assert(ret);
     return *ret;
