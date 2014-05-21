@@ -65,6 +65,7 @@ function gc_enabled() { }
 function gc_enable() { }
 function gc_disable() { }
 function gc_collect_cycles() { }
+function gc_collect() { }
 function zend_logo_guid() { }
 function zend_thread_id() { }
 function zend_version() { }

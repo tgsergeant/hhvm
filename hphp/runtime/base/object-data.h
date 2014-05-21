@@ -22,6 +22,7 @@
 #include "hphp/runtime/base/memory-manager.h"
 #include "hphp/runtime/base/smart-ptr.h"
 #include "hphp/runtime/base/types.h"
+#include "hphp/runtime/base/tracing-collector.h"
 
 #include "hphp/runtime/vm/class.h"
 #include "hphp/runtime/vm/hhbc.h"
@@ -146,6 +147,10 @@ class ObjectData {
         to the object (eg in backtraces).
       */
       obj->callCustomInstanceInit();
+    }
+
+    if (!obj->noDestruct()) {
+      markDestructableObject(obj);
     }
     return obj;
   }
@@ -340,7 +345,9 @@ class ObjectData {
    */
   Array& reserveProperties(int nProp = 2);
 
- protected:
+ public:
+  //Public access to these methods is the only easy way to trace these
+  //objects from the GC
   TypedValue* propVec();
   const TypedValue* propVec() const;
 

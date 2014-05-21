@@ -39,7 +39,8 @@ struct RequestInjectionData {
   static const ssize_t XenonSignalFlag      = 1 << 6;
   // Set by the debugger to break out of loops in translated code.
   static const ssize_t DebuggerSignalFlag   = 1 << 7;
-  static const ssize_t LastFlag             = DebuggerSignalFlag;
+  static const ssize_t GarbageCollectFlag   = 1 << 8;
+  static const ssize_t LastFlag             = GarbageCollectFlag;
   // flags that shouldn't be cleared by fetchAndClearFlags, because:
   // fetchAndClearFlags is only supposed to touch flags related to PHP-visible
   // signals/exceptions and resource limits
@@ -155,6 +156,9 @@ struct RequestInjectionData {
   void setXenonSignalFlag();
   void clearXenonSignalFlag();
   void setDebuggerSignalFlag();
+  void setGarbageCollectionFlag();
+  void clearGarbageCollectionFlag();
+
   ssize_t fetchAndClearFlags();
 
   inline bool checkXenonSignalFlag() {
