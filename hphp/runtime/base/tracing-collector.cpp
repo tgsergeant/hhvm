@@ -19,6 +19,8 @@
 
 #include "hphp/runtime/base/tracing-collector.h"
 
+#include "hphp/runtime/base/variable-serializer.h"
+
 namespace HPHP {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -30,35 +32,61 @@ int64_t tracingGCCollect() {
   return 110;
 }
 
+#define cereal(x) std::cout << s.serialize(x, true).c_str() << std::endl
+
 void MarkSweepCollector::markHeap() {
   Stack& stack = g_context->getStack();
   TypedValue *current = (TypedValue *)stack.getStackHighAddress();
 
-  std::queue<TypedValue> searchQ;
+  std::queue<TypedValue *> searchQ;
 
   while (current != (TypedValue *)stack.getStackLowAddress()) {
-    searchQ.push(*current);
+    searchQ.push(current);
     current --;
   }
 
   std::cout << "Found " << searchQ.size() << " roots" << std::endl;
 
-  TypedValue cur;
+  TypedValue *cur;
+  VariableSerializer s(VariableSerializer::Type::VarDump);
 
   while (!searchQ.empty()) {
     cur = searchQ.front();
 
-    if(cur.m_type == DataType::KindOfArray) {
+    if(cur->m_type == DataType::KindOfArray) {
       std::cout << "Found an array" << std::endl;
+      cereal(Variant(cur->m_data.parr));
 
-      for(ArrayIter iter(cur.m_data.parr); iter; ++iter) {
-        searchQ.push(*iter.first().asTypedValue());
-        searchQ.push(*iter.second().asTypedValue());
+      for(ArrayIter iter(cur->m_data.parr); iter; ++iter) {
+        std::cout << "---" << std::endl;
+        cereal(iter.first());
+        cereal(iter.second());
+        TypedValue *second = iter.second().asTypedValue();
+        searchQ.push(iter.first().asTypedValue());
+        searchQ.push(second);
       }
     }
 
+    if(cur->m_type == DataType::KindOfRef) {
+      std::cout << "Found a ref" << std::endl;
+      searchQ.push(cur->m_data.pref->tv());
+      markReachable(cur);
+    }
 
+    if(cur->m_type == DataType::KindOfObject) {
+      std::cout << "Found an object" << std::endl;
+      //Difficult case =/
+    }
 
+    if(cur->m_type == DataType::KindOfStaticString) {
+      std::cout << "Found a static string" << std::endl;
+      markReachable(cur);
+    }
+
+    if(cur->m_type == DataType::KindOfString) {
+      std::cout << "Found a string" << std::endl;
+      markReachable(cur);
+    }
     searchQ.pop();
   }
 }
