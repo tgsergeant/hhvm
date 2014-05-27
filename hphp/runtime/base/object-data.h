@@ -341,7 +341,9 @@ class ObjectData {
    */
   Array& reserveProperties(int nProp = 2);
 
- protected:
+ public:
+  //Public access to these methods is the only easy way to trace these
+  //objects from the GC
   TypedValue* propVec();
   const TypedValue* propVec() const;
 
