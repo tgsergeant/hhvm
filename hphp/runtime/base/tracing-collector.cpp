@@ -32,63 +32,102 @@ int64_t tracingGCCollect() {
   return 110;
 }
 
-#define cereal(x) std::cout << s.serialize(x, true).c_str() << std::endl
+#define cereal(x) std::cout << s.serialize(x, true).c_str()
 
 void MarkSweepCollector::markHeap() {
   Stack& stack = g_context->getStack();
   TypedValue *current = (TypedValue *)stack.getStackHighAddress();
 
-  std::queue<TypedValue *> searchQ;
+  std::queue<TypedValue> searchQ;
 
   while (current != (TypedValue *)stack.getStackLowAddress()) {
-    searchQ.push(current);
+    searchQ.push(*current);
     current --;
   }
 
   std::cout << "Found " << searchQ.size() << " roots" << std::endl;
 
-  TypedValue *cur;
+  TypedValue cur;
   VariableSerializer s(VariableSerializer::Type::VarDump);
 
   while (!searchQ.empty()) {
     cur = searchQ.front();
+    searchQ.pop();
 
-    if(cur->m_type == DataType::KindOfArray) {
+    if(isReachable(cur.m_data.pstr)) {
+      continue;
+    }
+
+    if(cur.m_type == DataType::KindOfArray) {
       std::cout << "Found an array" << std::endl;
-      cereal(Variant(cur->m_data.parr));
+      cereal(Variant(cur.m_data.parr));
 
-      for(ArrayIter iter(cur->m_data.parr); iter; ++iter) {
+      for(ArrayIter iter(cur.m_data.parr); iter; ++iter) {
         std::cout << "---" << std::endl;
         cereal(iter.first());
         cereal(iter.second());
         TypedValue *second = iter.second().asTypedValue();
-        searchQ.push(iter.first().asTypedValue());
-        searchQ.push(second);
+        searchQ.push(*iter.first().asTypedValue());
+        searchQ.push(*second);
+
+        markReachable(cur.m_data.parr);
       }
     }
 
-    if(cur->m_type == DataType::KindOfRef) {
+    if(cur.m_type == DataType::KindOfRef) {
       std::cout << "Found a ref" << std::endl;
-      searchQ.push(cur->m_data.pref->tv());
-      markReachable(cur);
+      searchQ.push(*cur.m_data.pref->tv());
+      markReachable(cur.m_data.pref);
     }
 
-    if(cur->m_type == DataType::KindOfObject) {
+    if(cur.m_type == DataType::KindOfObject) {
       std::cout << "Found an object" << std::endl;
-      //Difficult case =/
+      ObjectData *od = cur.m_data.pobj;
+
+      auto const cls = od->getVMClass();
+      const TypedValue *props = od->propVec();
+      auto propCount = cls->numDeclProperties();
+
+      std::cout << "Class has " << propCount << " declared properties" << std::endl;
+
+      //First go through all of the properties which are defined by the class
+      for(auto i = 0; i < propCount; i++) {
+        const TypedValue *prop = props + i;
+        std::cout << tname(prop->m_type) << std::endl;
+        searchQ.push(*prop);
+      }
+
+      //Then, if there are dynamic properties
+      if (UNLIKELY(od->getAttribute(ObjectData::Attribute::HasDynPropArr))) {
+        //The dynamic properties are implemented internally as an
+        //array, so why not treat them in the same way?
+        auto dynProps = od->dynPropArray();
+
+        std::cout << "Dynamic properties" << std::endl;
+        cereal(Variant(dynProps.get()));
+
+        TypedValue dynTv;
+        dynTv.m_data.parr = dynProps.get();
+        dynTv.m_type = DataType::KindOfArray;
+        searchQ.push(dynTv);
+
+      }
+      markReachable(od);
     }
 
-    if(cur->m_type == DataType::KindOfStaticString) {
+    if(cur.m_type == DataType::KindOfStaticString) {
       std::cout << "Found a static string" << std::endl;
-      markReachable(cur);
+      cereal(Variant(cur.m_data.pstr));
+      markReachable(cur.m_data.pstr);
     }
 
-    if(cur->m_type == DataType::KindOfString) {
+    if(cur.m_type == DataType::KindOfString) {
       std::cout << "Found a string" << std::endl;
-      markReachable(cur);
+      cereal(Variant(cur.m_data.pstr));
+      markReachable(cur.m_data.pstr);
     }
-    searchQ.pop();
   }
+  std::cout << "Marked " << marked.size()  << " things" << std::endl;
 }
 
 
