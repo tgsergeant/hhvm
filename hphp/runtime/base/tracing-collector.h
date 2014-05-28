@@ -27,7 +27,7 @@ class MarkSweepCollector {
 public: 
   MarkSweepCollector() {}
 
-  void markHeap();
+  int64_t markHeap();
 
   int sweepHeap() {return 1;}
 
