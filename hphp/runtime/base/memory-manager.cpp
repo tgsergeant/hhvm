@@ -282,7 +282,7 @@ void MemoryManager::resetAllocator() {
 
   // free smart-malloc slabs
   for (auto slab : m_slabs) {
-    free(slab);
+    free(slab.base);
   }
   m_slabs.clear();
   resetStatsImpl(true);
@@ -406,25 +406,39 @@ inline void* MemoryManager::smartRealloc(void* inputPtr, size_t nbytes) {
 }
 
 /*
- * Get a new slab, then allocate nbytes from it and install it in our
- * slab list.  Return the newly allocated nbytes-sized block.
+ * Allocatr a new slab and add it to the set of active slabs.
  */
-NEVER_INLINE void* MemoryManager::newSlab(size_t nbytes) {
+MemoryManager::Slab MemoryManager::newSlab(bool gc_enabled) {
   if (UNLIKELY(m_stats.usage > m_stats.maxBytes)) {
     refreshStatsHelper();
   }
-  void* slab = safe_malloc(kSlabSize);
-  assert((uintptr_t(slab) & kSmartSizeAlignMask) == 0);
-  JEMALLOC_STATS_ADJUST(&m_stats, kSlabSize);
-  m_stats.alloc += kSlabSize;
+  MemoryManager::Slab slab;
+  slab.base = (char*) safe_malloc(SLAB_SIZE);
+  slab.gc_enabled = gc_enabled;
+
+  assert(uintptr_t(slab.base) % 16 == 0);
+  JEMALLOC_STATS_ADJUST(&m_stats, SLAB_SIZE);
+  m_stats.alloc += SLAB_SIZE;
   if (m_stats.alloc > m_stats.peakAlloc) {
     m_stats.peakAlloc = m_stats.alloc;
   }
   m_slabs.push_back(slab);
-  m_front = (void*)(uintptr_t(slab) + nbytes);
-  m_limit = (void*)(uintptr_t(slab) + kSlabSize);
-  FTRACE(3, "newSlab: adding slab at {} to limit {}\n", slab, m_limit);
   return slab;
+}
+
+/*
+ * Get a new slab, then allocate nbytes from it and install it in our
+ * slab list.  Return the newly allocated nbytes-sized block.
+ */
+NEVER_INLINE char* MemoryManager::newSlab(size_t nbytes) {
+  MemoryManager::Slab slab = newSlab(false);
+
+  m_front = (void*)(uintptr_t(slab.base) + nbytes);
+  m_limit = (void*)(uintptr_t(slab.base) + kSlabSize);
+  FTRACE(3, "newSlab: adding slab at {} to limit {}\n",
+         static_cast<void*>(slab.base),
+         static_cast<void*>(m_limit));
+  return slab.base;
 }
 
 // allocate nbytes from the current slab, aligned to kSmartSizeAlign
@@ -627,9 +641,15 @@ bool MemoryManager::checkPreFree(DebugHeader* p,
     auto const ptrInt = reinterpret_cast<uintptr_t>(p);
     DEBUG_ONLY auto it = std::find_if(
       begin(m_slabs), end(m_slabs),
+<<<<<<< HEAD
       [&] (void* base) {
         auto const baseInt = reinterpret_cast<uintptr_t>(base);
         return ptrInt >= baseInt && ptrInt < baseInt + kSlabSize;
+=======
+      [&] (MemoryManager::Slab slab) {
+        auto const baseInt = reinterpret_cast<uintptr_t>(slab.base);
+        return ptrInt >= baseInt && ptrInt < baseInt + SLAB_SIZE;
+>>>>>>> Start to add new block-based memory management API
       }
     );
     assert(it != end(m_slabs));
@@ -646,6 +666,17 @@ void MemoryManager::logDeallocation(void* p) {
   MemoryProfile::logDeallocation(p);
 }
 
+void *MemoryManager::blockMalloc(size_t nbytes) {
+  return m_currentBlock.head;
+}
+
+/*
+ * Allocate a new slab for tracing collection, and carve
+ * it up into blocks ready to be used.
+ */
+void MemoryManager::prepareGCEnabledSlab() {
+
+}
 ///////////////////////////////////////////////////////////////////////////////
 
 }

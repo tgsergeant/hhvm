@@ -20,6 +20,7 @@
 #include <array>
 #include <vector>
 #include <utility>
+#include <queue>
 
 #include "folly/Memory.h"
 
@@ -479,6 +480,31 @@ private:
 
   static void* TlsInitSetup;
 
+  struct Slab {
+    char *base = nullptr;
+    bool gc_enabled = false;
+  };
+
+  /*
+   * The size of a single region for garbage-collection
+   */
+  static constexpr size_t kBlockSize = 4096;
+
+  struct Block {
+    char *head = nullptr;
+    char *end = nullptr;
+  };
+
+  /*
+   * Allocates memory from the current block. If this object will not
+   * fit onto the current block, we move to the next available block.
+   */
+  void *blockMalloc(size_t nbytes);
+
+private:
+  Slab newSlab(bool gc_enabled);
+  void prepareGCEnabledSlab();
+
 private:
   MemoryManager();
   MemoryManager(const MemoryManager&) = delete;
@@ -525,7 +551,7 @@ private:
   SweepNode m_strings; // in-place node is head of circular list
   MemoryUsageStats m_stats;
   bool m_statsIntervalActive;
-  std::vector<void*> m_slabs;
+  std::vector<Slab> m_slabs;
 
 #ifdef USE_JEMALLOC
   uint64_t* m_allocated;
@@ -541,6 +567,10 @@ private:
 
 private:
   bool m_sweeping;
+
+private:
+  std::queue<Block> m_availableBlocks;
+  Block m_currentBlock;
 };
 
 //////////////////////////////////////////////////////////////////////
