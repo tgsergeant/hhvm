@@ -1167,7 +1167,7 @@ static int64_t HHVM_FUNCTION(gc_collect_cycles) {
 }
 
 static int64_t HHVM_FUNCTION(gc_collect) {
-  return tracingGCCollect();
+  return gc().collect();
 }
 ///////////////////////////////////////////////////////////////////////////////
 

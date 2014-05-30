@@ -15,23 +15,38 @@
 */
 
 #include "hphp/runtime/base/base-includes.h"
+#include "hphp/util/thread-local.h"
+
 #include <boost/container/set.hpp>
 
 namespace HPHP {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+class MarkSweepCollector;
+
+MarkSweepCollector &gc();
+
 int64_t tracingGCCollect();
 
 class MarkSweepCollector {
-public: 
-  MarkSweepCollector() {}
+public:
+  typedef ThreadLocalSingleton<MarkSweepCollector> TlsWrapper;
+  static void Create(void *);
+  static void Delete(MarkSweepCollector *);
+  static void OnThreadExit(MarkSweepCollector *);
 
+public:
+  MarkSweepCollector() {}
+  ~MarkSweepCollector() {}
+
+  int64_t collect();
+
+private:
   int64_t markHeap();
 
   int sweepHeap() {return 1;}
 
-private:
   void markReachable(void *ptr);
   bool isReachable(void *ptr);
 
