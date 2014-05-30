@@ -26,9 +26,29 @@ namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
 
 
-int64_t tracingGCCollect() {
-  MarkSweepCollector msc;
-  return msc.markHeap();
+//Thread local singleton stuff
+
+MarkSweepCollector::TlsWrapper tls;
+
+MarkSweepCollector &gc() {
+  return *MarkSweepCollector::TlsWrapper::getCheck();
+}
+
+void MarkSweepCollector::Create(void *storage) {
+  new (storage) MarkSweepCollector();
+}
+
+void MarkSweepCollector::Delete(MarkSweepCollector *msc) {
+  msc->~MarkSweepCollector();
+}
+
+void MarkSweepCollector::OnThreadExit(MarkSweepCollector *msc) {}
+
+
+//Actual implementation
+
+int64_t MarkSweepCollector::collect() {
+  return markHeap();
 }
 
 int64_t MarkSweepCollector::markHeap() {
