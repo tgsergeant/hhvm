@@ -82,7 +82,7 @@ ArrayData* MixedArray::MakePacked(uint32_t size, const TypedValue* values) {
 
   auto const cap = size;
   auto const ad = static_cast<ArrayData*>(
-    MM().objMallocLogged(sizeof(ArrayData) + sizeof(TypedValue) * cap)
+    MM().blockMalloc(sizeof(ArrayData) + sizeof(TypedValue) * cap)
   );
 
   ad->m_kindAndSize = uint64_t{size} << 32 | cap;  // sets kPackedKind
