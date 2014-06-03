@@ -95,7 +95,7 @@ NEVER_INLINE
 ArrayData* EmptyArray::Copy(const ArrayData*) {
   auto const cap = kPackedSmallSize;
   auto const ad = static_cast<ArrayData*>(
-    MM().objMallocLogged(sizeof(ArrayData) + sizeof(TypedValue) * cap)
+    MM().blockMalloc(sizeof(ArrayData) + sizeof(TypedValue) * cap)
   );
   ad->m_kindAndSize = cap;
   ad->m_posAndCount = static_cast<uint32_t>(ArrayData::invalid_index);
@@ -141,7 +141,7 @@ ALWAYS_INLINE
 std::pair<ArrayData*,TypedValue*> EmptyArray::MakePackedInl(TypedValue tv) {
   auto const cap = kPackedSmallSize;
   auto const ad = static_cast<ArrayData*>(
-    MM().objMallocLogged(sizeof(ArrayData) + cap * sizeof(TypedValue))
+    MM().blockMalloc(sizeof(ArrayData) + cap * sizeof(TypedValue))
   );
   ad->m_kindAndSize = uint64_t{1} << 32 | cap; // also set kind
   ad->m_posAndCount = 0;
