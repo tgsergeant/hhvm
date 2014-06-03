@@ -17,9 +17,13 @@
 #include <queue>
 #include <iostream>
 
-#include "hphp/runtime/base/tracing-collector.h"
+#include "hphp/runtime/base/tracing-collector-impl.h"
 
 #include "hphp/runtime/base/variable-serializer.h"
+
+#include "hphp/util/trace.h"
+
+TRACE_SET_MOD(smartalloc);
 
 namespace HPHP {
 
@@ -46,6 +50,10 @@ void MarkSweepCollector::OnThreadExit(MarkSweepCollector *msc) {}
 
 
 //Actual implementation
+
+int64_t tracingGCCollect() {
+  return gc().collect();
+}
 
 int64_t MarkSweepCollector::collect() {
   return markHeap();
@@ -135,6 +143,12 @@ void MarkSweepCollector::markReachable(void *ptr) {
 
 bool MarkSweepCollector::isReachable(void *ptr) {
   return (marked.find(ptr) != marked.end());
+}
+
+void MarkSweepCollector::markDestructable(ObjectData const *obj) {
+  destructable.push_back(obj);
+  FTRACE(1, "Marked {} as destructable\n", obj);
+  FTRACE(1, "Total destructable: {}\n", destructable.size());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
