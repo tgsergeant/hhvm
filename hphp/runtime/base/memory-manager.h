@@ -498,11 +498,16 @@ private:
   /*
    * Allocates memory from the current block. If this object will not
    * fit onto the current block, we move to the next available block.
+   *
+   * Allocations are 16-byte aligned.
+   *
+   * Allocations larger than 2KB are managed directly through malloc
    */
   void *blockMalloc(size_t nbytes);
 
 private:
   Slab newSlab(bool gc_enabled);
+  void getNextBlock();
   void prepareGCEnabledSlab();
 
 private:

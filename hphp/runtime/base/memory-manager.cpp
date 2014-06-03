@@ -667,7 +667,31 @@ void MemoryManager::logDeallocation(void* p) {
 }
 
 void *MemoryManager::blockMalloc(size_t nbytes) {
-  return m_currentBlock.head;
+  if (nbytes > kMaxSmartSize) {
+    assert(false);
+  }
+  if (m_currentBlock.head + nbytes >= m_currentBlock.end) {
+    getNextBlock();
+  }
+  const size_t kAlignMask = 15;
+  uintptr_t ptr = uintptr_t(m_currentBlock.head + kAlignMask) & ~kAlignMask;
+
+  m_currentBlock.head = (char *)(ptr + nbytes);
+  FTRACE(2, "allocated {} bytes from current block");
+  return (void *)ptr;
+}
+
+/*
+ * Assuming that the current block is out of space, make the next
+ * available block active. A new slab will be allocated if required.
+ */
+void MemoryManager::getNextBlock() {
+  if (UNLIKELY(m_availableBlocks.size() == 0)) {
+    prepareGCEnabledSlab();
+  }
+  m_currentBlock = m_availableBlocks.front();
+  m_availableBlocks.pop();
+  FTRACE(2, "moved to next block");
 }
 
 /*
@@ -675,7 +699,17 @@ void *MemoryManager::blockMalloc(size_t nbytes) {
  * it up into blocks ready to be used.
  */
 void MemoryManager::prepareGCEnabledSlab() {
+  MemoryManager::Slab sl = newSlab(true);
+  char *blockptr = sl.base;
+  do {
+    Block b;
+    b.head = blockptr;
+    b.end = blockptr + kBlockSize;
+    m_availableBlocks.push(b);
 
+    blockptr += kBlockSize;
+  } while (blockptr < sl.base + SLAB_SIZE);
+  FTRACE(2, "new slab, {} blocks", m_availableBlocks.size());
 }
 ///////////////////////////////////////////////////////////////////////////////
 
