@@ -14,19 +14,56 @@
    +----------------------------------------------------------------------+
 */
 
-#ifndef incl_HPHP_TRACING_COLLECTOR_H_
-#define incl_HPHP_TRACING_COLLECTOR_H_
+#ifndef incl_HPHP_TRACING_COLLECTOR_IMPL_H_
+#define incl_HPHP_TRACING_COLLECTOR_IMPL_H_
 
-#include "hphp/runtime/base/types.h"
+#include "hphp/runtime/base/tracing-collector.h"
+#include "hphp/util/thread-local.h"
+#include "hphp/runtime/base/base-includes.h"
+
+#include <boost/container/set.hpp>
 
 namespace HPHP {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+class MarkSweepCollector {
+public:
+  typedef ThreadLocalSingleton<MarkSweepCollector> TlsWrapper;
+  static void Create(void *);
+  static void Delete(MarkSweepCollector *);
+  static void OnThreadExit(MarkSweepCollector *);
 
-int64_t tracingGCCollect();
-void markDestructableObject(ObjectData const *obj);
+public:
+  MarkSweepCollector() {}
+  ~MarkSweepCollector() {}
 
+  int64_t collect();
+
+  /**
+   * Mark an object as having a destructor that will need to
+   * be called when it is collected.
+   */
+  void markDestructable(const ObjectData *obj);
+
+private:
+  int64_t markHeap();
+
+  int sweepHeap() {return 1;}
+
+  void markReachable(void *ptr);
+  bool isReachable(void *ptr);
+
+  std::unordered_set<const void *> marked;
+
+  //A vector is probably not the best data structure for this,
+  //depending on the size of the data.
+  //Something that is segregated based on memory block will be
+  //easier to handle at collection time.
+  std::vector<const ObjectData *> destructable;
+};
+
+MarkSweepCollector &gc();
 
 ///////////////////////////////////////////////////////////////////////////////
 
