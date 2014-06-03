@@ -636,17 +636,24 @@ void MemoryManager::logDeallocation(void* p) {
 
 void *MemoryManager::blockMalloc(size_t nbytes) {
   if (nbytes > kMaxSmartSize) {
-    assert(false);
+    //This is temporary. Something else needs to be done here.
+    // This is already wrapped in debug stuff
+    return smartMallocSizeBig<false>(nbytes).first;
   }
-  if (m_currentBlock.head + nbytes >= m_currentBlock.end) {
+
+  //We are not allowed to cross block boundaries
+  const auto size = debugAddExtra(nbytes);
+  if (m_currentBlock.head + size >= m_currentBlock.end) {
     getNextBlock();
   }
+
+  //Move to the next multiple of 16 bytes after the head
   const size_t kAlignMask = 15;
   uintptr_t ptr = uintptr_t(m_currentBlock.head + kAlignMask) & ~kAlignMask;
 
-  m_currentBlock.head = (char *)(ptr + nbytes);
-  FTRACE(2, "allocated {} bytes from current block");
-  return (void *)ptr;
+  m_currentBlock.head = (char *)(ptr + size);
+  FTRACE(1, "allocated {} bytes from current block\n", nbytes);
+  return debugPostAllocate((void *)ptr, nbytes, nbytes);
 }
 
 /*
@@ -659,7 +666,7 @@ void MemoryManager::getNextBlock() {
   }
   m_currentBlock = m_availableBlocks.front();
   m_availableBlocks.pop();
-  FTRACE(2, "moved to next block");
+  TRACE(1, "moved to next block\n");
 }
 
 /*
@@ -677,7 +684,7 @@ void MemoryManager::prepareGCEnabledSlab() {
 
     blockptr += kBlockSize;
   } while (blockptr < sl.base + SLAB_SIZE);
-  FTRACE(2, "new slab, {} blocks", m_availableBlocks.size());
+  FTRACE(1, "new slab, {} blocks\n", m_availableBlocks.size());
 }
 ///////////////////////////////////////////////////////////////////////////////
 

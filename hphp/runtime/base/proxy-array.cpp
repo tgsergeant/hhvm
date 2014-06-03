@@ -43,7 +43,7 @@ ArrayData* ProxyArray::innerArr(const ArrayData* ad) {
 }
 
 ProxyArray* ProxyArray::Make(ArrayData* ad) {
-  auto ret = static_cast<ProxyArray*>(MM().objMallocLogged(sizeof(ProxyArray)));
+  auto ret = static_cast<ProxyArray*>(MM().blockMalloc(sizeof(ProxyArray)));
   ret->m_size            = -1;
   ret->m_kind            = kProxyKind;
   ret->m_pos             = ArrayData::invalid_index;

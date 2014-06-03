@@ -359,6 +359,7 @@ private:
    *
    * Allocations larger than 2KB are managed directly through malloc
    */
+public:
   void *blockMalloc(size_t nbytes);
 
 private:
