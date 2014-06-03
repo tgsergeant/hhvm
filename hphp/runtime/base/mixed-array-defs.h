@@ -358,7 +358,7 @@ MixedArray* smartAllocArray(uint32_t cap, uint32_t mask) {
    * for a packed array even if we aren't going to use it yet.
    */
   auto const allocBytes = computeAllocBytes(cap, mask);
-  return static_cast<MixedArray*>(MM().objMallocLogged(allocBytes));
+  return static_cast<MixedArray*>(MM().blockMalloc(allocBytes));
 }
 
 ALWAYS_INLINE

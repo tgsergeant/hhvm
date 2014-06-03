@@ -200,7 +200,7 @@ ArrayData* PackedArray::Grow(ArrayData* old) {
     assert(old->m_packedCapCode == packedCodeToCap(old->m_packedCapCode));
     auto const cap = old->m_packedCapCode * 2;
     ad = static_cast<ArrayData*>(
-      MM().objMallocLogged(sizeof(ArrayData) + cap * sizeof(TypedValue))
+      MM().blockMalloc(sizeof(ArrayData) + cap * sizeof(TypedValue))
     );
     auto const oldSize = old->m_size;
     assert(cap == packedCodeToCap(cap));
@@ -296,7 +296,7 @@ ArrayData* PackedArray::Copy(const ArrayData* adIn) {
   auto const cap = packedCodeToCap(adIn->m_packedCapCode);
 
   auto const ad = static_cast<ArrayData*>(
-    MM().objMallocLogged(sizeof(ArrayData) + cap * sizeof(TypedValue))
+    MM().blockMalloc(sizeof(ArrayData) + cap * sizeof(TypedValue))
   );
   auto const size = adIn->m_size;
   auto const capCode = adIn->m_packedCapCode;
@@ -435,7 +435,7 @@ ArrayData* MixedArray::MakeReserve(uint32_t capacity) {
     auto const kSmallSize = MixedArray::SmallSize;
     auto const cap = std::max(capacity, kSmallSize);
     ad = static_cast<ArrayData*>(
-      MM().objMallocLogged(sizeof(ArrayData) + sizeof(TypedValue) * cap)
+      MM().blockMalloc(sizeof(ArrayData) + sizeof(TypedValue) * cap)
     );
     assert(cap == packedCodeToCap(cap));
     ad->m_kindAndSize = cap;    // zeros m_size and m_kind

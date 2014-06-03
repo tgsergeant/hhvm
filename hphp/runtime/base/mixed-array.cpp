@@ -83,7 +83,7 @@ ArrayData* MixedArray::MakePacked(uint32_t size, const TypedValue* values) {
   if (LIKELY(size <= kPackedCapCodeThreshold)) {
     auto const cap = size;
     ad = static_cast<ArrayData*>(
-      MM().objMallocLogged(sizeof(ArrayData) + sizeof(TypedValue) * cap)
+      MM().blockMalloc(sizeof(ArrayData) + sizeof(TypedValue) * cap)
     );
     assert(cap == packedCodeToCap(cap));
     ad->m_kindAndSize = uint64_t{size} << 32 | cap;  // sets kPackedKind
