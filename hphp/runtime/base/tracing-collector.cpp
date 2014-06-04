@@ -90,11 +90,13 @@ int64_t MarkSweepCollector::markHeap() {
     }
 
     if(cur.m_type == DataType::KindOfArray) {
-      for(ArrayIter iter(cur.m_data.parr); iter; ++iter) {
-        searchQ.push(*iter.first().asTypedValue());
-        searchQ.push(*iter.second().asTypedValue());
+      if(cur.m_data.parr) {
+        for(ArrayIter iter(cur.m_data.parr); iter; ++iter) {
+          searchQ.push(*iter.first().asTypedValue());
+          searchQ.push(*iter.second().asTypedValue());
 
-        markReachable(cur.m_data.parr);
+          markReachable(cur.m_data.parr);
+        }
       }
     }
 
@@ -105,6 +107,10 @@ int64_t MarkSweepCollector::markHeap() {
 
     if(cur.m_type == DataType::KindOfObject) {
       ObjectData *od = cur.m_data.pobj;
+      if(!od) {
+        //std::cout << "Hit a fake object" << std::endl;
+        continue;
+      }
 
       auto const cls = od->getVMClass();
       const TypedValue *props = od->propVec();
