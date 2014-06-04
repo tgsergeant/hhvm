@@ -37,6 +37,16 @@ TRACE_SET_MOD(smartalloc);
 
 //////////////////////////////////////////////////////////////////////
 
+const uint32_t SLAB_SIZE = 2 << 20;
+
+const uint32_t SLAB_ALIGNMENT = 2 << 18;
+
+static_assert(SLAB_SIZE % SLAB_ALIGNMENT == 0, "Slabs must be a multiple of alignment");
+static_assert(SLAB_ALIGNMENT % sizeof(void *) == 0, "Slab alignment must be a multiple of void*");
+
+
+//////////////////////////////////////////////////////////////////////
+
 #ifdef USE_JEMALLOC
 bool MemoryManager::s_statsEnabled = false;
 size_t MemoryManager::s_cactiveLimitCeiling = 0;
@@ -413,7 +423,15 @@ MemoryManager::Slab MemoryManager::newSlab(bool gc_enabled) {
     refreshStatsHelper();
   }
   MemoryManager::Slab slab;
-  slab.base = (char*) safe_malloc(SLAB_SIZE);
+  if(gc_enabled) {
+    void *ptr;
+    safe_posix_memalign(&ptr, SLAB_ALIGNMENT, SLAB_SIZE);
+    slab.base = (char *)ptr;
+
+    assert(uintptr_t(slab.base) % SLAB_ALIGNMENT == 0);
+  } else {
+    slab.base = (char*) safe_malloc(SLAB_SIZE);
+  }
   slab.gc_enabled = gc_enabled;
 
   assert(uintptr_t(slab.base) % 16 == 0);
@@ -641,15 +659,9 @@ bool MemoryManager::checkPreFree(DebugHeader* p,
     auto const ptrInt = reinterpret_cast<uintptr_t>(p);
     DEBUG_ONLY auto it = std::find_if(
       begin(m_slabs), end(m_slabs),
-<<<<<<< HEAD
-      [&] (void* base) {
-        auto const baseInt = reinterpret_cast<uintptr_t>(base);
-        return ptrInt >= baseInt && ptrInt < baseInt + kSlabSize;
-=======
       [&] (MemoryManager::Slab slab) {
         auto const baseInt = reinterpret_cast<uintptr_t>(slab.base);
         return ptrInt >= baseInt && ptrInt < baseInt + SLAB_SIZE;
->>>>>>> Start to add new block-based memory management API
       }
     );
     assert(it != end(m_slabs));
