@@ -142,6 +142,10 @@ inline void* safe_malloc(size_t size) {
   return p;
 }
 
+inline void safe_posix_memalign(void **ptr, size_t alignment, size_t size) {
+  if (posix_memalign(ptr, alignment, size)) throw OutOfMemoryException(size);
+}
+
 inline void* safe_calloc(size_t count, size_t size) {
   void* p = calloc(count, size);
   if (!p) throw OutOfMemoryException(size);
