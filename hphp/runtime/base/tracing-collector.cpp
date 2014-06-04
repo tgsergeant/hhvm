@@ -30,6 +30,17 @@ namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
 
 
+// External API (tracing-collector.h)
+
+int64_t tracingGCCollect() {
+  return gc().collect();
+}
+
+void markDestructableObject(ObjectData const *obj) {
+  gc().markDestructable(obj);
+}
+
+
 //Thread local singleton stuff
 
 MarkSweepCollector::TlsWrapper tls;
@@ -51,9 +62,6 @@ void MarkSweepCollector::OnThreadExit(MarkSweepCollector *msc) {}
 
 //Actual implementation
 
-int64_t tracingGCCollect() {
-  return gc().collect();
-}
 
 int64_t MarkSweepCollector::collect() {
   return markHeap();
@@ -148,7 +156,6 @@ bool MarkSweepCollector::isReachable(void *ptr) {
 void MarkSweepCollector::markDestructable(ObjectData const *obj) {
   destructable.push_back(obj);
   FTRACE(1, "Marked {} as destructable\n", obj);
-  FTRACE(1, "Total destructable: {}\n", destructable.size());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
