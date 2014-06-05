@@ -37,9 +37,9 @@ TRACE_SET_MOD(smartalloc);
 
 //////////////////////////////////////////////////////////////////////
 
-const uint32_t SLAB_SIZE = 2 << 20;
+const uint32_t SLAB_SIZE = MemoryManager::kSlabSize;
 
-const uint32_t SLAB_ALIGNMENT = 2 << 18;
+const uint32_t SLAB_ALIGNMENT = MemoryManager::kSlabAlignment;
 
 static_assert(SLAB_SIZE % SLAB_ALIGNMENT == 0, "Slabs must be a multiple of alignment");
 static_assert(SLAB_ALIGNMENT % sizeof(void *) == 0, "Slab alignment must be a multiple of void*");
@@ -698,7 +698,18 @@ void MemoryManager::prepareGCEnabledSlab() {
 
     blockptr += kBlockSize;
   } while (blockptr < sl.base + SLAB_SIZE);
-  FTRACE(1, "new slab, {} blocks\n", m_availableBlocks.size());
+  FTRACE(1, "new slab {}, {} blocks\n", (void *)sl.base, m_availableBlocks.size());
+}
+
+const std::vector<MemoryManager::Slab> MemoryManager::getActiveSlabs(bool gc_only) {
+  std::vector<MemoryManager::Slab> results(m_slabs);
+
+  if(gc_only) {
+    results.erase(std::remove_if(results.begin(), results.end(),
+          [] (MemoryManager::Slab s) { return !s.gc_enabled; }), results.end());
+  }
+
+  return results;
 }
 ///////////////////////////////////////////////////////////////////////////////
 
