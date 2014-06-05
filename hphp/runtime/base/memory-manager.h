@@ -480,9 +480,17 @@ private:
 
   static void* TlsInitSetup;
 
+
+public:
+
   struct Slab {
     char *base = nullptr;
     bool gc_enabled = false;
+  };
+
+  struct Block {
+    char *head = nullptr;
+    char *end = nullptr;
   };
 
   /*
@@ -490,10 +498,20 @@ private:
    */
   static constexpr size_t kBlockSize = 4096;
 
-  struct Block {
-    char *head = nullptr;
-    char *end = nullptr;
-  };
+  /*
+   * Size of slabs of memory which are alloced at once
+   */
+  static constexpr size_t kSlabSize = 2 << 20;
+
+  /*
+   * GC-enabled slabs will be aligned to a multiple of this
+   * value.
+   * Should be a divisor of kSlabSize, and a multiple of
+   * sizeof(void *)
+   */
+  static constexpr size_t kSlabAlignment = 2 << 18;
+
+  static constexpr size_t kBlocksPerSlab = kSlabSize / kBlockSize;
 
   /*
    * Allocates memory from the current block. If this object will not
@@ -503,8 +521,13 @@ private:
    *
    * Allocations larger than 2KB are managed directly through malloc
    */
-public:
   void *blockMalloc(size_t nbytes);
+
+  /*
+   * Returns all slabs currently in use by this thread.
+   * Can optionally include only those managed by the garbage collector.
+   */
+  const std::vector<Slab> getActiveSlabs(bool gc_only);
 
 private:
   Slab newSlab(bool gc_enabled);
