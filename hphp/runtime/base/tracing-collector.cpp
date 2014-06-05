@@ -62,9 +62,19 @@ void MarkSweepCollector::OnThreadExit(MarkSweepCollector *msc) {}
 
 //Actual implementation
 
-
 int64_t MarkSweepCollector::collect() {
-  return markHeap();
+
+  prepareSlabData();
+  auto ret = markHeap();
+
+  for(auto sd : m_slabs) {
+    FTRACE(1, "Slab: {}\n{}\n\n", (void *)sd.slab.base, sd.usedBlocks.to_string());
+  }
+
+  //Clear out the intermediate data we used
+  cleanData();
+
+  return ret;
 }
 
 int64_t MarkSweepCollector::markHeap() {
@@ -78,6 +88,8 @@ int64_t MarkSweepCollector::markHeap() {
     current --;
   }
 
+  FTRACE(3, "Found {} roots\n", searchQ.size());
+
   TypedValue cur;
   VariableSerializer s(VariableSerializer::Type::VarDump);
 
@@ -85,11 +97,8 @@ int64_t MarkSweepCollector::markHeap() {
     cur = searchQ.front();
     searchQ.pop();
 
-    if(isReachable(cur.m_data.pstr)) {
-      continue;
-    }
-
     if(cur.m_type == DataType::KindOfArray) {
+      TRACE(3, "Found array\n");
       if(cur.m_data.parr) {
         for(ArrayIter iter(cur.m_data.parr); iter; ++iter) {
           searchQ.push(*iter.first().asTypedValue());
@@ -97,18 +106,22 @@ int64_t MarkSweepCollector::markHeap() {
 
           markReachable(cur.m_data.parr);
         }
+      } else {
+        TRACE(3, "It was a fake\n");
       }
     }
 
     if(cur.m_type == DataType::KindOfRef) {
+      TRACE(3, "Found a ref");
       searchQ.push(*cur.m_data.pref->tv());
       markReachable(cur.m_data.pref);
     }
 
     if(cur.m_type == DataType::KindOfObject) {
+      TRACE(3, "Found an object\n");
       ObjectData *od = cur.m_data.pobj;
       if(!od) {
-        //std::cout << "Hit a fake object" << std::endl;
+        TRACE(3, "It was a fake\n");
         continue;
       }
 
@@ -138,6 +151,7 @@ int64_t MarkSweepCollector::markHeap() {
     }
 
     if(cur.m_type == DataType::KindOfStaticString || cur.m_type == DataType::KindOfString) {
+      TRACE(3, "Found a string");
       markReachable(cur.m_data.pstr);
     }
 
@@ -147,16 +161,60 @@ int64_t MarkSweepCollector::markHeap() {
       markReachable(cur.m_data.pres);
     }
   }
-  return marked.size();
+  return 111;
 }
 
+void MarkSweepCollector::prepareSlabData() {
+  const std::vector<MemoryManager::Slab> activeSlabs = MM().getActiveSlabs(true);
+  const auto alignmentFactor = MemoryManager::kSlabSize / MemoryManager::kSlabAlignment;
+
+  for(auto slab : activeSlabs) {
+    int i = m_slabs.size();
+    MarkSweepCollector::SlabData sd;
+    sd.slab = slab;
+    m_slabs.push_back(sd);
+
+    MarkSweepCollector::SlabData *sdptr = &(m_slabs[i]);
+
+    for(int j = 0; j < alignmentFactor; j++) {
+      uintptr_t align = uintptr_t(slab.base) + MemoryManager::kSlabAlignment * j;
+      slabLookup[align] = sdptr;
+    }
+  }
+}
+
+void MarkSweepCollector::cleanData() {
+  m_slabs.clear();
+  slabLookup.clear();
+}
+
+MarkSweepCollector::SlabData *MarkSweepCollector::getSlabData(void *ptr) {
+  uintptr_t aligned = (uintptr_t(ptr) + alignBits) & ~alignBits;
+  auto ret = slabLookup.find(aligned);
+  if(ret == slabLookup.end()) {
+    return NULL;
+  }
+  return ret->second;
+}
 
 void MarkSweepCollector::markReachable(void *ptr) {
-  marked.insert(ptr);
+  //marked.insert(ptr);
+  MarkSweepCollector::SlabData *sd = getSlabData(ptr);
+  if(sd) {
+    size_t blockId = (size_t)((uintptr_t(ptr) - uintptr_t(sd->slab.base)) / MemoryManager::kBlockSize);
+    FTRACE(2, "Marked {} as reachable (block {})\n", ptr, blockId);
+
+    sd->usedBlocks.set(blockId);
+  }
 }
 
 bool MarkSweepCollector::isReachable(void *ptr) {
-  return (marked.find(ptr) != marked.end());
+  MarkSweepCollector::SlabData *sd = getSlabData(ptr);
+  if(sd) {
+    size_t blockId = (size_t)((uintptr_t(ptr) - uintptr_t(sd->slab.base)) / MemoryManager::kBlockSize);
+    return sd->usedBlocks[blockId];
+  }
+  return false;
 }
 
 void MarkSweepCollector::markDestructable(ObjectData const *obj) {
