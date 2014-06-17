@@ -49,7 +49,7 @@ public:
   void markDestructable(const ObjectData *obj);
 
 private:
-  static constexpr size_t alignBits = MemoryManager::kSlabAlignment - 1;
+  static constexpr size_t alignBits = kSlabAlignment - 1;
 
   struct SlabData {
     MemoryManager::Slab slab;

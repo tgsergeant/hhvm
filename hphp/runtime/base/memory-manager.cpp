@@ -35,14 +35,9 @@ namespace HPHP {
 
 TRACE_SET_MOD(smartalloc);
 
-//////////////////////////////////////////////////////////////////////
 
-const uint32_t SLAB_SIZE = MemoryManager::kSlabSize;
-
-const uint32_t SLAB_ALIGNMENT = MemoryManager::kSlabAlignment;
-
-static_assert(SLAB_SIZE % SLAB_ALIGNMENT == 0, "Slabs must be a multiple of alignment");
-static_assert(SLAB_ALIGNMENT % sizeof(void *) == 0, "Slab alignment must be a multiple of void*");
+static_assert(kSlabSize % kSlabAlignment == 0, "Slabs must be a multiple of alignment");
+static_assert(kSlabAlignment % sizeof(void *) == 0, "Slab alignment must be a multiple of void*");
 
 
 //////////////////////////////////////////////////////////////////////
@@ -425,18 +420,18 @@ MemoryManager::Slab MemoryManager::newSlab(bool gc_enabled) {
   MemoryManager::Slab slab;
   if(gc_enabled) {
     void *ptr;
-    safe_posix_memalign(&ptr, SLAB_ALIGNMENT, SLAB_SIZE);
+    safe_posix_memalign(&ptr, kSlabAlignment, kSlabSize);
     slab.base = (char *)ptr;
 
-    assert(uintptr_t(slab.base) % SLAB_ALIGNMENT == 0);
+    assert(uintptr_t(slab.base) % kSlabAlignment == 0);
   } else {
-    slab.base = (char*) safe_malloc(SLAB_SIZE);
+    slab.base = (char*) safe_malloc(kSlabSize);
   }
   slab.gc_enabled = gc_enabled;
 
   assert(uintptr_t(slab.base) % 16 == 0);
-  JEMALLOC_STATS_ADJUST(&m_stats, SLAB_SIZE);
-  m_stats.alloc += SLAB_SIZE;
+  JEMALLOC_STATS_ADJUST(&m_stats, kSlabSize);
+  m_stats.alloc += kSlabSize;
   if (m_stats.alloc > m_stats.peakAlloc) {
     m_stats.peakAlloc = m_stats.alloc;
   }
@@ -448,7 +443,7 @@ MemoryManager::Slab MemoryManager::newSlab(bool gc_enabled) {
  * Get a new slab, then allocate nbytes from it and install it in our
  * slab list.  Return the newly allocated nbytes-sized block.
  */
-NEVER_INLINE char* MemoryManager::newSlab(size_t nbytes) {
+NEVER_INLINE void* MemoryManager::newSlab(size_t nbytes) {
   MemoryManager::Slab slab = newSlab(false);
 
   m_front = (void*)(uintptr_t(slab.base) + nbytes);
@@ -661,7 +656,7 @@ bool MemoryManager::checkPreFree(DebugHeader* p,
       begin(m_slabs), end(m_slabs),
       [&] (MemoryManager::Slab slab) {
         auto const baseInt = reinterpret_cast<uintptr_t>(slab.base);
-        return ptrInt >= baseInt && ptrInt < baseInt + SLAB_SIZE;
+        return ptrInt >= baseInt && ptrInt < baseInt + kSlabSize;
       }
     );
     assert(it != end(m_slabs));
@@ -687,15 +682,15 @@ void *MemoryManager::blockMalloc(size_t nbytes) {
 
   //We are not allowed to cross block boundaries
   const auto size = debugAddExtra(nbytes);
-  if (m_currentBlock.head + size >= m_currentBlock.end) {
+  if (uintptr_t(m_currentBlock.head) + size >= uintptr_t(m_currentBlock.end)) {
     getNextBlock();
   }
 
   //Move to the next multiple of 16 bytes after the head
   const size_t kAlignMask = 15;
-  uintptr_t ptr = uintptr_t(m_currentBlock.head + kAlignMask) & ~kAlignMask;
+  uintptr_t ptr = (uintptr_t(m_currentBlock.head) + kAlignMask) & ~kAlignMask;
 
-  m_currentBlock.head = (char *)(ptr + size);
+  m_currentBlock.head = (void *)(ptr + size);
   FTRACE(2, "allocated {} bytes from current block\n", nbytes);
   return debugPostAllocate((void *)ptr, nbytes, nbytes);
 }
@@ -710,7 +705,21 @@ void MemoryManager::getNextBlock() {
   }
   m_currentBlock = m_availableBlocks.front();
   m_availableBlocks.pop();
-  TRACE(1, "moved to next block\n");
+
+  //Mark this block as in use
+  //const auto alignBits = kSlabAlignment - 1;
+  //uintptr_t aligned = (uintptr_t(m_currentBlock.head) + alignBits) & ~alignBits;
+  //auto slabIdx = slabLookup.find(aligned);
+
+  //assert(slabIdx != slabLookup.end());
+
+  //auto slab = m_slabs[slabIdx->second];
+
+  //auto blockId = (uintptr_t(m_currentBlock.head) - uintptr_t(slab.base)) / MemoryManager::kBlockSize;
+
+  //slab.allocatedBlocks.set(blockId);
+
+  //FTRACE(1, "moved to next block (id: {})\n", blockId);
 }
 
 /*
@@ -719,15 +728,26 @@ void MemoryManager::getNextBlock() {
  */
 void MemoryManager::prepareGCEnabledSlab() {
   MemoryManager::Slab sl = newSlab(true);
-  char *blockptr = sl.base;
+  uintptr_t blockptr = uintptr_t(sl.base);
+
+  //Create blocks
   do {
     Block b;
-    b.head = blockptr;
-    b.end = blockptr + kBlockSize;
+    b.head = (void *)blockptr;
+    b.end = (void *)(blockptr + kBlockSize);
     m_availableBlocks.push(b);
 
     blockptr += kBlockSize;
-  } while (blockptr < sl.base + SLAB_SIZE);
+  } while (blockptr < uintptr_t(sl.base) + kSlabSize);
+
+  //Create entries in slabLookup so we can constant-time find this slab later
+  size_t vector_idx = m_slabs.size() - 1;
+
+  for (int j = 0; j < kAlignmentFactor; j++) {
+    uintptr_t align = uintptr_t(blockptr) + kSlabAlignment * j;
+    slabLookup[align] = vector_idx;
+  }
+
   FTRACE(1, "new slab {}, {} blocks\n", (void *)sl.base, m_availableBlocks.size());
 }
 

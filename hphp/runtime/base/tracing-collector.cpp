@@ -20,6 +20,7 @@
 #include "hphp/runtime/base/tracing-collector-impl.h"
 
 #include "hphp/runtime/base/variable-serializer.h"
+#include "hphp/runtime/vm/vm-regs.h"
 
 #include "hphp/util/trace.h"
 
@@ -78,7 +79,7 @@ int64_t MarkSweepCollector::collect() {
 }
 
 int64_t MarkSweepCollector::markHeap() {
-  Stack& stack = g_context->getStack();
+  Stack& stack = vmStack();
   TypedValue *current = (TypedValue *)stack.getStackHighAddress();
 
   std::queue<TypedValue> searchQ;
@@ -166,7 +167,7 @@ int64_t MarkSweepCollector::markHeap() {
 
 void MarkSweepCollector::prepareSlabData() {
   const std::vector<MemoryManager::Slab> activeSlabs = MM().getActiveSlabs(true);
-  const auto alignmentFactor = MemoryManager::kSlabSize / MemoryManager::kSlabAlignment;
+  const auto alignmentFactor = kSlabSize / kSlabAlignment;
 
   for(auto slab : activeSlabs) {
     int i = m_slabs.size();
@@ -177,7 +178,7 @@ void MarkSweepCollector::prepareSlabData() {
     MarkSweepCollector::SlabData *sdptr = &(m_slabs[i]);
 
     for(int j = 0; j < alignmentFactor; j++) {
-      uintptr_t align = uintptr_t(slab.base) + MemoryManager::kSlabAlignment * j;
+      uintptr_t align = uintptr_t(slab.base) + kSlabAlignment * j;
       slabLookup[align] = sdptr;
     }
   }

@@ -21,6 +21,7 @@
 #include <vector>
 #include <utility>
 #include <queue>
+#include <bitset>
 
 #include "folly/Memory.h"
 
@@ -240,6 +241,17 @@ static_assert(kLgMaxSmartSize > kLgSmartSizeQuantum + 1,
 constexpr size_t kNumSmartSizes = (kLgMaxSmartSize - kLgSmartSizeQuantum
                                   - (kLgSizeClassesPerDoubling - 1))
                                   << kLgSizeClassesPerDoubling;
+
+/*
+ * GC-enabled slabs will be aligned to a multiple of this
+ * value.
+ * Should be a divisor of kSlabSize, and a multiple of
+ * sizeof(void *)
+ */
+constexpr size_t kSlabAlignment = 2 << 18;
+
+constexpr size_t kAlignmentFactor = kSlabSize / kSlabAlignment;
+
 /*
  * The maximum size where we use our custom allocator for request-local memory.
  *
@@ -482,36 +494,23 @@ private:
 
 
 public:
-
-  struct Slab {
-    char *base = nullptr;
-    bool gc_enabled = false;
-  };
-
-  struct Block {
-    char *head = nullptr;
-    char *end = nullptr;
-  };
-
   /*
    * The size of a single region for garbage-collection
    */
   static constexpr size_t kBlockSize = 4096;
 
-  /*
-   * Size of slabs of memory which are alloced at once
-   */
-  static constexpr size_t kSlabSize = 2 << 20;
-
-  /*
-   * GC-enabled slabs will be aligned to a multiple of this
-   * value.
-   * Should be a divisor of kSlabSize, and a multiple of
-   * sizeof(void *)
-   */
-  static constexpr size_t kSlabAlignment = 2 << 18;
-
   static constexpr size_t kBlocksPerSlab = kSlabSize / kBlockSize;
+
+  struct Slab {
+    void *base = nullptr;
+    bool gc_enabled = false;
+    std::bitset<kBlocksPerSlab> allocatedBlocks;
+  };
+
+  struct Block {
+    void *head = nullptr;
+    void *end = nullptr;
+  };
 
   /*
    * Allocates memory from the current block. If this object will not
@@ -600,6 +599,7 @@ private:
 private:
   std::queue<Block> m_availableBlocks;
   Block m_currentBlock;
+  std::unordered_map<uintptr_t, size_t> slabLookup;
 };
 
 //////////////////////////////////////////////////////////////////////
