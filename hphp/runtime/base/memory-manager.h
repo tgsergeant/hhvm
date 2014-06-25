@@ -21,6 +21,7 @@
 #include <vector>
 #include <utility>
 #include <queue>
+#include <bitset>
 
 #include "folly/Memory.h"
 
@@ -339,16 +340,6 @@ private:
 
 public:
 
-  struct Slab {
-    char *base = nullptr;
-    bool gc_enabled = false;
-  };
-
-  struct Block {
-    char *head = nullptr;
-    char *end = nullptr;
-  };
-
   /*
    * The size of a single region for garbage-collection
    */
@@ -369,6 +360,19 @@ public:
 
   static constexpr size_t kBlocksPerSlab = kSlabSize / kBlockSize;
 
+  static constexpr size_t kAlignmentFactor = kSlabSize / kSlabAlignment;
+
+  struct Slab {
+    char *base = nullptr;
+    bool gc_enabled = false;
+    std::bitset<kBlocksPerSlab> allocatedBlocks;
+  };
+
+  struct Block {
+    char *head = nullptr;
+    char *end = nullptr;
+  };
+
   /*
    * Allocates memory from the current block. If this object will not
    * fit onto the current block, we move to the next available block.
@@ -384,6 +388,12 @@ public:
    * Can optionally include only those managed by the garbage collector.
    */
   const std::vector<Slab> getActiveSlabs(bool gc_only);
+
+  void recycleMemory(Slab slab, std::bitset<kBlocksPerSlab> blocksToFree);
+
+  static size_t getBlockId(const Slab slab, void *ptr);
+
+  static void *slabAlignedPtr(void *ptr);
 
 private:
   Slab newSlab(bool gc_enabled);
@@ -456,6 +466,8 @@ private:
 private:
   std::queue<Block> m_availableBlocks;
   Block m_currentBlock;
+  std::unordered_map<uintptr_t, size_t> slabLookup;
+  static constexpr size_t slabAlignBits = kSlabAlignment - 1;
 };
 
 //////////////////////////////////////////////////////////////////////

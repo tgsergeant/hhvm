@@ -680,7 +680,29 @@ void MemoryManager::getNextBlock() {
   }
   m_currentBlock = m_availableBlocks.front();
   m_availableBlocks.pop();
-  TRACE(1, "moved to next block\n");
+
+  //Mark this block as in use
+  auto slabAlignedBlock = slabAlignedPtr(m_currentBlock.head);
+  auto slabIdx = slabLookup.find(uintptr_t(slabAlignedBlock));
+
+  assert(slabIdx != slabLookup.end());
+
+  auto slab = m_slabs.data() + slabIdx->second;
+
+  auto blockId = getBlockId(*slab, m_currentBlock.head);
+
+  slab->allocatedBlocks.set(blockId);
+
+  FTRACE(1, "moved to next block (id: {})\n", blockId);
+}
+
+size_t MemoryManager::getBlockId(const Slab slab, void *ptr) {
+  return (uintptr_t(ptr) - uintptr_t(slab.base)) / MemoryManager::kBlockSize;
+}
+
+void *MemoryManager::slabAlignedPtr(void *ptr) {
+  uintptr_t iptr = uintptr_t(ptr);
+  return (void *)(iptr - (iptr & MemoryManager::slabAlignBits));
 }
 
 /*
@@ -689,15 +711,24 @@ void MemoryManager::getNextBlock() {
  */
 void MemoryManager::prepareGCEnabledSlab() {
   MemoryManager::Slab sl = newSlab(true);
-  char *blockptr = sl.base;
+  uintptr_t blockptr = uintptr_t(sl.base);
+
   do {
     Block b;
-    b.head = blockptr;
-    b.end = blockptr + kBlockSize;
+    b.head = (char *)blockptr;
+    b.end = (char *)(blockptr + kBlockSize);
     m_availableBlocks.push(b);
 
     blockptr += kBlockSize;
-  } while (blockptr < sl.base + SLAB_SIZE);
+  } while (blockptr < uintptr_t(sl.base) + SLAB_SIZE);
+
+  size_t vector_idx = m_slabs.size() - 1;
+
+  for(int j = 0; j < kAlignmentFactor; j++) {
+    uintptr_t align = uintptr_t(sl.base) + kSlabAlignment * j;
+    slabLookup[align] = vector_idx;
+  }
+
   FTRACE(1, "new slab {}, {} blocks\n", (void *)sl.base, m_availableBlocks.size());
 }
 
@@ -710,6 +741,10 @@ const std::vector<MemoryManager::Slab> MemoryManager::getActiveSlabs(bool gc_onl
   }
 
   return results;
+}
+
+void MemoryManager::recycleMemory(Slab slab, std::bitset<kBlocksPerSlab> blocksToFree) {
+  //TODO
 }
 ///////////////////////////////////////////////////////////////////////////////
 
