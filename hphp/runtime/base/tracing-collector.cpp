@@ -68,7 +68,13 @@ int64_t MarkSweepCollector::collect() {
   auto ret = markHeap();
 
   for(auto sd : m_slabs) {
-    FTRACE(1, "Slab: {}\n{}\n\n", (void *)sd.slab.base, sd.usedBlocks.to_string());
+    FTRACE(1, "Used: {}\n{}\n\n", (void *)sd.slab.base, sd.usedBlocks.to_string());
+    FTRACE(1, "Allocated: {}\n{}\n\n", (void *)sd.slab.base, sd.slab.allocatedBlocks.to_string());
+
+    auto blocksToFree = ~ sd.usedBlocks & sd.slab.allocatedBlocks;
+
+    FTRACE(1, "To free:\n{}\n\n", blocksToFree.to_string());
+
   }
 
   //Clear out the intermediate data we used
@@ -189,7 +195,7 @@ void MarkSweepCollector::cleanData() {
 }
 
 MarkSweepCollector::SlabData *MarkSweepCollector::getSlabData(void *ptr) {
-  uintptr_t aligned = (uintptr_t(ptr) + alignBits) & ~alignBits;
+  uintptr_t aligned = uintptr_t(MemoryManager::slabAlignedPtr(ptr));
   auto ret = slabLookup.find(aligned);
   if(ret == slabLookup.end()) {
     return NULL;
@@ -198,10 +204,9 @@ MarkSweepCollector::SlabData *MarkSweepCollector::getSlabData(void *ptr) {
 }
 
 void MarkSweepCollector::markReachable(void *ptr) {
-  //marked.insert(ptr);
   MarkSweepCollector::SlabData *sd = getSlabData(ptr);
   if(sd) {
-    size_t blockId = (size_t)((uintptr_t(ptr) - uintptr_t(sd->slab.base)) / MemoryManager::kBlockSize);
+    size_t blockId = MemoryManager::getBlockId(sd->slab, ptr);
     FTRACE(2, "Marked {} as reachable (block {})\n", ptr, blockId);
 
     sd->usedBlocks.set(blockId);
@@ -211,7 +216,7 @@ void MarkSweepCollector::markReachable(void *ptr) {
 bool MarkSweepCollector::isReachable(void *ptr) {
   MarkSweepCollector::SlabData *sd = getSlabData(ptr);
   if(sd) {
-    size_t blockId = (size_t)((uintptr_t(ptr) - uintptr_t(sd->slab.base)) / MemoryManager::kBlockSize);
+    size_t blockId = MemoryManager::getBlockId(sd->slab, ptr);
     return sd->usedBlocks[blockId];
   }
   return false;
