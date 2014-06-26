@@ -67,6 +67,8 @@ int64_t MarkSweepCollector::collect() {
   prepareSlabData();
   auto ret = markHeap();
 
+  int reclaimed = 0;
+
   for(auto sd : m_slabs) {
     FTRACE(1, "Used: {}\n{}\n\n", (void *)sd.slab.base, sd.usedBlocks.to_string());
     FTRACE(1, "Allocated: {}\n{}\n\n", (void *)sd.slab.base, sd.slab.allocatedBlocks.to_string());
@@ -75,7 +77,13 @@ int64_t MarkSweepCollector::collect() {
 
     FTRACE(1, "To free:\n{}\n\n", blocksToFree.to_string());
 
+    //Should remain disabled until we know that gc_enabled objects are not being collected elsewhere
+    //(Otherwise they could end up on a freelist as well as in the block allocator)
+    //MM().recycleMemory(sd.slab, blocksToFree);
+    reclaimed += blocksToFree.count();
   }
+
+  FTRACE(1, "Reclaimed {} blocks ({} kb)\n", reclaimed, reclaimed * 4);
 
   //Clear out the intermediate data we used
   cleanData();
