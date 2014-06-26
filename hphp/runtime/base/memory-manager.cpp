@@ -425,11 +425,11 @@ MemoryManager::Slab MemoryManager::newSlab(bool gc_enabled) {
   if(gc_enabled) {
     void *ptr;
     safe_posix_memalign(&ptr, SLAB_ALIGNMENT, SLAB_SIZE);
-    slab.base = (char *)ptr;
+    slab.base = (void *)ptr;
 
     assert(uintptr_t(slab.base) % SLAB_ALIGNMENT == 0);
   } else {
-    slab.base = (char*) safe_malloc(SLAB_SIZE);
+    slab.base = (void *) safe_malloc(SLAB_SIZE);
   }
   slab.gc_enabled = gc_enabled;
 
@@ -450,12 +450,12 @@ MemoryManager::Slab MemoryManager::newSlab(bool gc_enabled) {
 NEVER_INLINE char* MemoryManager::newSlab(size_t nbytes) {
   MemoryManager::Slab slab = newSlab(false);
 
-  m_front = slab.base + nbytes;
-  m_limit = slab.base + SLAB_SIZE;
+  m_front = (char *)slab.base + nbytes;
+  m_limit = (char *)slab.base + SLAB_SIZE;
   FTRACE(3, "newSlab: adding slab at {} to limit {}\n",
          static_cast<void*>(slab.base),
          static_cast<void*>(m_limit));
-  return slab.base;
+  return (char *)slab.base;
 }
 
 // allocate nbytes from the current slab, aligned to 16-bytes
@@ -657,13 +657,13 @@ void *MemoryManager::blockMalloc(size_t nbytes) {
 
   //We are not allowed to cross block boundaries
   const auto size = debugAddExtra(nbytes);
-  if (m_currentBlock.head + size >= m_currentBlock.end) {
+  if (uintptr_t(m_currentBlock.head) + size >= uintptr_t(m_currentBlock.end)) {
     getNextBlock();
   }
 
   //Move to the next multiple of 16 bytes after the head
   const size_t kAlignMask = 15;
-  uintptr_t ptr = uintptr_t(m_currentBlock.head + kAlignMask) & ~kAlignMask;
+  uintptr_t ptr = (uintptr_t(m_currentBlock.head) + kAlignMask) & ~kAlignMask;
 
   m_currentBlock.head = (char *)(ptr + size);
   FTRACE(2, "allocated {} bytes from current block\n", nbytes);
@@ -715,8 +715,8 @@ void MemoryManager::prepareGCEnabledSlab() {
 
   do {
     Block b;
-    b.head = (char *)blockptr;
-    b.end = (char *)(blockptr + kBlockSize);
+    b.head = (void *)blockptr;
+    b.end = (void *)(blockptr + kBlockSize);
     m_availableBlocks.push(b);
 
     blockptr += kBlockSize;

@@ -363,14 +363,14 @@ public:
   static constexpr size_t kAlignmentFactor = kSlabSize / kSlabAlignment;
 
   struct Slab {
-    char *base = nullptr;
+    void *base = nullptr;
     bool gc_enabled = false;
     std::bitset<kBlocksPerSlab> allocatedBlocks;
   };
 
   struct Block {
-    char *head = nullptr;
-    char *end = nullptr;
+    void *head = nullptr;
+    void *end = nullptr;
   };
 
   /*
