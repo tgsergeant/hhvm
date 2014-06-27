@@ -20,6 +20,8 @@
 #include "hphp/runtime/base/tracing-collector-impl.h"
 
 #include "hphp/runtime/base/variable-serializer.h"
+#include "hphp/runtime/base/thread-info.h"
+#include "hphp/runtime/vm/jit/translator-inline.h"
 
 #include "hphp/util/trace.h"
 
@@ -38,6 +40,11 @@ int64_t tracingGCCollect() {
 
 void markDestructableObject(ObjectData const *obj) {
   gc().markDestructable(obj);
+}
+
+void requestGC() {
+  ThreadInfo *info = ThreadInfo::s_threadInfo.getNoCheck();
+  info->m_reqInjectionData.setGarbageCollectionFlag();
 }
 
 
@@ -63,6 +70,7 @@ void MarkSweepCollector::OnThreadExit(MarkSweepCollector *msc) {}
 //Actual implementation
 
 int64_t MarkSweepCollector::collect() {
+  JIT::VMRegAnchor _;
 
   prepareSlabData();
   auto ret = markHeap();

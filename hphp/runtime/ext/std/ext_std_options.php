@@ -376,10 +376,10 @@ function gc_disable(): void;
 <<__Native>>
 function gc_collect_cycles(): int;
 
-/* Performs a tracing garbage collection.
+/* Requests a tracing garbage collection.
  */
 <<__Native, __HipHopSpecific>>
-function gc_collect(): int;
+function gc_collect(): void;
 
 /* Returns a string containing the version of the currently running Zend
  * Engine.

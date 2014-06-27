@@ -23,7 +23,7 @@ namespace HPHP {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-
+void requestGC();
 int64_t tracingGCCollect();
 void markDestructableObject(ObjectData const *obj);
 
