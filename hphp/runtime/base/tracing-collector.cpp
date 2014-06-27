@@ -73,6 +73,11 @@ int64_t MarkSweepCollector::collect() {
   JIT::VMRegAnchor _;
 
   prepareSlabData();
+
+  for(auto thing : slabLookup) {
+    FTRACE(3, "{} -> {}\n", (void *)thing.first, (void *)m_slabs[thing.second].slab.base);
+  }
+
   auto ret = markHeap();
 
   int reclaimed = 0;
@@ -195,12 +200,7 @@ void MarkSweepCollector::prepareSlabData() {
     sd.slab = slab;
     m_slabs.push_back(sd);
 
-    MarkSweepCollector::SlabData *sdptr = &(m_slabs[i]);
-
-    for(int j = 0; j < alignmentFactor; j++) {
-      uintptr_t align = uintptr_t(slab.base) + MemoryManager::kSlabAlignment * j;
-      slabLookup[align] = sdptr;
-    }
+    slabLookup[sd.slab.base] = i;
   }
 }
 
@@ -210,12 +210,12 @@ void MarkSweepCollector::cleanData() {
 }
 
 MarkSweepCollector::SlabData *MarkSweepCollector::getSlabData(void *ptr) {
-  uintptr_t aligned = uintptr_t(MemoryManager::slabAlignedPtr(ptr));
+  void *aligned = MemoryManager::slabAlignedPtr(ptr);
   auto ret = slabLookup.find(aligned);
   if(ret == slabLookup.end()) {
     return NULL;
   }
-  return ret->second;
+  return m_slabs.data() + ret->second;
 }
 
 void MarkSweepCollector::markReachable(void *ptr) {

@@ -424,10 +424,10 @@ MemoryManager::Slab MemoryManager::newSlab(bool gc_enabled) {
   MemoryManager::Slab slab;
   if(gc_enabled) {
     void *ptr;
-    safe_posix_memalign(&ptr, SLAB_ALIGNMENT, SLAB_SIZE);
+    safe_posix_memalign(&ptr, SLAB_SIZE, SLAB_SIZE);
     slab.base = (void *)ptr;
 
-    assert(uintptr_t(slab.base) % SLAB_ALIGNMENT == 0);
+    assert(uintptr_t(slab.base) % SLAB_SIZE == 0);
     if (getActiveSlabs(true).size() > 0) {
       //GC at the end of this function
       // TODO: Better heuristics
@@ -731,10 +731,7 @@ void MemoryManager::prepareGCEnabledSlab() {
 
   size_t vector_idx = m_slabs.size() - 1;
 
-  for(int j = 0; j < kAlignmentFactor; j++) {
-    uintptr_t align = uintptr_t(sl.base) + kSlabAlignment * j;
-    slabLookup[align] = vector_idx;
-  }
+  slabLookup[uintptr_t(sl.base)] = vector_idx;
 
   FTRACE(1, "new slab {}, {} blocks\n", (void *)sl.base, m_availableBlocks.size());
 }
