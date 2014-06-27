@@ -134,7 +134,7 @@ int64_t MarkSweepCollector::markHeap() {
     }
 
     if(cur.m_type == DataType::KindOfRef) {
-      TRACE(3, "Found a ref");
+      TRACE(3, "Found a ref\n");
       searchQ.push(*cur.m_data.pref->tv());
       markReachable(cur.m_data.pref);
     }
@@ -173,13 +173,12 @@ int64_t MarkSweepCollector::markHeap() {
     }
 
     if(cur.m_type == DataType::KindOfStaticString || cur.m_type == DataType::KindOfString) {
-      TRACE(3, "Found a string");
+      TRACE(3, "Found a string\n");
       markReachable(cur.m_data.pstr);
     }
 
     if(cur.m_type == DataType::KindOfResource) {
-      std::cout << "Found a resource" << std::endl;
-      std::cout << "Not currently implemented" << std::endl;
+      TRACE(3, "Found a resource\n(Not currently implemented)\n");
       markReachable(cur.m_data.pres);
     }
   }
