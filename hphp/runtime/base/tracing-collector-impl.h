@@ -95,7 +95,7 @@ private:
 
   std::vector<SlabData> m_slabs;
 
-  std::unordered_map<uintptr_t, SlabData *> slabLookup;
+  std::unordered_map<void *, size_t> slabLookup;
 };
 
 MarkSweepCollector &gc();
