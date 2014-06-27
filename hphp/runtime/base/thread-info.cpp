@@ -30,6 +30,7 @@
 #include "hphp/runtime/base/code-coverage.h"
 #include "hphp/runtime/base/ini-setting.h"
 #include "hphp/runtime/base/rds.h"
+#include "hphp/runtime/base/tracing-collector.h"
 #include "hphp/runtime/ext/ext_string.h"
 #include "hphp/util/lock.h"
 #include "hphp/util/alloc.h"
@@ -149,13 +150,14 @@ void throw_infinite_recursion_exception() {
 
 ssize_t check_request_surprise(ThreadInfo* info) {
   auto& p = info->m_reqInjectionData;
-  bool do_timedout, do_memExceeded, do_signaled;
+  bool do_timedout, do_memExceeded, do_signaled, do_gc;
 
   ssize_t flags = p.fetchAndClearFlags();
   do_timedout = (flags & RequestInjectionData::TimedOutFlag) &&
     !p.getDebugger();
   do_memExceeded = (flags & RequestInjectionData::MemExceededFlag);
   do_signaled = (flags & RequestInjectionData::SignaledFlag);
+  do_gc = (flags & RequestInjectionData::GarbageCollectFlag);
 
   // Start with any pending exception that might be on the thread.
   Exception* pendingException = info->m_pendingException;
@@ -174,6 +176,10 @@ ssize_t check_request_surprise(ThreadInfo* info) {
 
   if (pendingException) {
     pendingException->throwException();
+  }
+
+  if (do_gc) {
+    tracingGCCollect();
   }
   return flags;
 }

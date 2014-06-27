@@ -112,10 +112,11 @@ void emitRegRegMove(vixl::MacroAssembler& a, const vixl::CPURegister& dst,
 //////////////////////////////////////////////////////////////////////
 
 void emitTestSurpriseFlags(vixl::MacroAssembler& a) {
-  static_assert(RequestInjectionData::LastFlag < (1 << 8),
-                "Translator assumes RequestInjectionFlags fit in one byte");
+  static_assert(RequestInjectionData::LastFlag < (1 << 16),
+                "Translator assumes RequestInjectionFlags fit in two bytes");
+  //TODO: Check if this actually works. x86 requires checking each byte individually
   a.  Ldrb  (rAsm, rVmTl[RDS::kConditionFlagsOff]);
-  a.  Tst   (rAsm, 0xff);
+  a.  Tst   (rAsm, 0xffff);
 }
 
 void emitCheckSurpriseFlagsEnter(CodeBlock& mainCode, CodeBlock& stubsCode,

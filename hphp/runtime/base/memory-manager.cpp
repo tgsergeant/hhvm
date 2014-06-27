@@ -428,6 +428,13 @@ MemoryManager::Slab MemoryManager::newSlab(bool gc_enabled) {
     slab.base = (void *)ptr;
 
     assert(uintptr_t(slab.base) % SLAB_ALIGNMENT == 0);
+    if (getActiveSlabs(true).size() > 0) {
+      //GC at the end of this function
+      // TODO: Better heuristics
+      ThreadInfo* info = ThreadInfo::s_threadInfo.getNoCheck();
+      info->m_reqInjectionData.setGarbageCollectionFlag();
+    }
+
   } else {
     slab.base = (void *) safe_malloc(SLAB_SIZE);
   }
