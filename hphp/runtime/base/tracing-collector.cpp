@@ -25,7 +25,7 @@
 
 #include "hphp/util/trace.h"
 
-TRACE_SET_MOD(smartalloc);
+TRACE_SET_MOD(tmp1);
 
 namespace HPHP {
 
@@ -110,10 +110,30 @@ int64_t MarkSweepCollector::markHeap() {
 
   std::queue<TypedValue> searchQ;
 
-  while (current != (TypedValue *)stack.getStackLowAddress()) {
-    searchQ.push(*current);
-    current --;
+  const ActRec* const fp = g_context->getFP();
+  const TypedValue *const sp = g_context->getStack().top();
+  const Offset offset = fp->m_func->base();
+
+  for(auto ent : fp->m_func->fpitab()) {
+    FTRACE(2, "Offset: {}\n", ent->m_fpOff);
   }
+  visitStackElems(fp, sp, offset,
+      [&](const ActRec *ar) {
+        FTRACE(2, "Found an ActRec\nMarking $this as a root\n");
+        TypedValue thisTV;
+        thisTV.m_data.pobj = ar->m_this;
+        thisTV.m_type = KindOfObject;
+        searchQ.push(thisTV);
+      },
+      [&](const TypedValue *tv) {
+        searchQ.push(*tv);
+      }
+  );
+
+  //while (current != (TypedValue *)stack.getStackLowAddress()) {
+    //searchQ.push(*current);
+    //current --;
+  //}
 
   FTRACE(3, "Found {} roots\n", searchQ.size());
 

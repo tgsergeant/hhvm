@@ -432,7 +432,7 @@ MemoryManager::Slab MemoryManager::newSlab(bool gc_enabled) {
       //GC at the end of this function
       // TODO: Better heuristics
       ThreadInfo* info = ThreadInfo::s_threadInfo.getNoCheck();
-      info->m_reqInjectionData.setGarbageCollectionFlag();
+      //info->m_reqInjectionData.setGarbageCollectionFlag();
     }
 
   } else {
