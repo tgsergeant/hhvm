@@ -81,12 +81,14 @@ struct CondBlock {
       : m_a(a)
       , m_off(offset) {
     int typeDisp = m_off + FieldOffset;
-    static_assert(sizeof(FieldType) == 1 || sizeof(FieldType) == 4,
+    static_assert(sizeof(FieldType) == 1 || sizeof(FieldType) == 4 || sizeof(FieldType) == 2,
                   "CondBlock of unimplemented field size");
     if (sizeof(FieldType) == 4) {
       a. cmpl(FieldValue, reg[typeDisp]);
     } else if (sizeof(FieldType) == 1) {
       a. cmpb(FieldValue, reg[typeDisp]);
+    } else if (sizeof(FieldType) == 2) {
+      a. cmpw(FieldValue, reg[typeDisp]);
     }
     m_jcc8 = a.frontier();
     a.   jcc8(Jcc, m_jcc8);

@@ -121,7 +121,7 @@ struct IfCountNotStatic {
   typedef CondBlock<FAST_REFCOUNT_OFFSET,
                     0,
                     CC_S,
-                    int32_t> NonStaticCondBlock;
+                    int16_t> NonStaticCondBlock;
   static_assert(UncountedValue < 0 && StaticValue < 0, "");
   NonStaticCondBlock *m_cb; // might be null
   IfCountNotStatic(Asm& as,
@@ -155,7 +155,7 @@ void emitIncRef(Asm& as, PhysReg base) {
     emitAssertRefCount(as, base);
   }
   // emit incref
-  as.incl(base[FAST_REFCOUNT_OFFSET]);
+  as.incw(base[FAST_REFCOUNT_OFFSET]);
   if (RuntimeOption::EvalHHIRGenerateAsserts) {
     // Assert that the ref count is greater than zero
     emitAssertFlagsNonNegative(as);
@@ -175,7 +175,7 @@ void emitIncRefGenericRegSafe(Asm& as, PhysReg base, int disp, PhysReg tmpReg) {
     as.   loadq  (base[disp + TVOFF(m_data)], tmpReg);
     { // if !static
       IfCountNotStatic ins(as, tmpReg);
-      as. incl(tmpReg[FAST_REFCOUNT_OFFSET]);
+      as. incw(tmpReg[FAST_REFCOUNT_OFFSET]);
     } // endif
   } // endif
 }
@@ -185,9 +185,9 @@ void emitAssertFlagsNonNegative(Asm& as) {
 }
 
 void emitAssertRefCount(Asm& as, PhysReg base) {
-  as.cmpl(HPHP::StaticValue, base[FAST_REFCOUNT_OFFSET]);
+  as.cmpw(HPHP::StaticValue, base[FAST_REFCOUNT_OFFSET]);
   ifThen(as, CC_NLE, [&] {
-    as.cmpl(HPHP::RefCountMaxRealistic, base[FAST_REFCOUNT_OFFSET]);
+    as.cmpw(HPHP::RefCountMaxRealistic, base[FAST_REFCOUNT_OFFSET]);
     ifThen(as, CC_NBE, [&] { as.ud2(); });
   });
 }

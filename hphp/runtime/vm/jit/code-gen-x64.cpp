@@ -2982,7 +2982,7 @@ void CodeGenerator::cgIncRefWork(Type type, SSATmp* src, PhysLoc srcLoc) {
     if (!type.needsStaticBitCheck()) {
       emitIncRef(m_as, base);
     } else {
-      m_as.cmpl(0, base[FAST_REFCOUNT_OFFSET]);
+      m_as.cmpw(0, base[FAST_REFCOUNT_OFFSET]);
       static_assert(UncountedValue < 0 && StaticValue < 0, "");
       ifThen(m_as, CC_NS, [&] { emitIncRef(m_as, base); });
     }
@@ -3192,7 +3192,7 @@ Address CodeGenerator::cgCheckStaticBitAndDecRef(Type type,
   };
 
   if (!type.needsStaticBitCheck()) {
-    m_as.decl(dataReg[FAST_REFCOUNT_OFFSET]);
+    m_as.decw(dataReg[FAST_REFCOUNT_OFFSET]);
     if (RuntimeOption::EvalHHIRGenerateAsserts) {
       // Assert that the ref count is not less than zero
       emitAssertFlagsNonNegative(m_as);
@@ -3213,7 +3213,7 @@ Address CodeGenerator::cgCheckStaticBitAndDecRef(Type type,
     }
 
     // Decrement _count
-    as.decl(dataReg[FAST_REFCOUNT_OFFSET]);
+    as.decw(dataReg[FAST_REFCOUNT_OFFSET]);
 
     if (RuntimeOption::EvalHHIRGenerateAsserts) {
       // Assert that the ref count is not less than zero
@@ -3222,11 +3222,11 @@ Address CodeGenerator::cgCheckStaticBitAndDecRef(Type type,
   };
 
   if (hasDestroy) {
-    m_as.cmpl(1, dataReg[FAST_REFCOUNT_OFFSET]);
+    m_as.cmpw(1, dataReg[FAST_REFCOUNT_OFFSET]);
     ifThenElse(CC_E, destroy, static_check_and_decl, unlikelyDestroy);
     return addrToPatch;
   } else if (type.needsStaticBitCheck()) {
-    m_as.cmpl(0, dataReg[FAST_REFCOUNT_OFFSET]);
+    m_as.cmpw(0, dataReg[FAST_REFCOUNT_OFFSET]);
   }
 
   static_check_and_decl(m_as);
@@ -3438,7 +3438,7 @@ void CodeGenerator::cgCufIterSpillFrame(IRInstruction* inst) {
   m_as.loadq   (fpReg[itOff + CufIter::nameOff()], m_rScratch);
   m_as.testq    (m_rScratch, m_rScratch);
   ifThen(m_as, CC_NZ, [this] {
-      m_as.cmpl(0, m_rScratch[FAST_REFCOUNT_OFFSET]);
+      m_as.cmpw(0, m_rScratch[FAST_REFCOUNT_OFFSET]);
       static_assert(UncountedValue < 0 && StaticValue < 0, "");
       ifThen(m_as, CC_NS, [&] { emitIncRef(m_as, m_rScratch); });
       m_as.orq (ActRec::kInvNameBit, m_rScratch);
@@ -4049,7 +4049,7 @@ void CodeGenerator::cgStaticLocInitCached(IRInstruction* inst) {
   // to inc ref it because it's a bytecode invariant that it's not a
   // reference counted type.
   cgStore(rdSrc[RefData::tvOffset()], inst->src(1), srcLoc(1), Width::Full);
-  a.    incl   (rdSrc[FAST_REFCOUNT_OFFSET]);
+  a.    incw   (rdSrc[FAST_REFCOUNT_OFFSET]);
   if (debug) {
     static_assert(sizeof(RefData::Magic::kMagic) == sizeof(uint64_t), "");
     emitImmStoreq(a, static_cast<int64_t>(RefData::Magic::kMagic),
@@ -4445,7 +4445,7 @@ void CodeGenerator::cgVectorHasImmCopy(IRInstruction* inst) {
   uint rawPtrOffset = c_Vector::dataOffset() + kExpectedMPxOffset;
 
   m_as.loadq(vecReg[rawPtrOffset], m_rScratch);
-  m_as.cmpl(
+  m_as.cmpw(
     1,
     m_rScratch[(int64_t)FAST_REFCOUNT_OFFSET - (int64_t)sizeof(ArrayData)]
   );
@@ -4707,7 +4707,7 @@ void CodeGenerator::cgCheckType(IRInstruction* inst) {
       // We carry Str and Arr operands around without a type register,
       // even though they're union types.  The static and non-static
       // subtypes are distinguised by the refcount field.
-      m_as.cmpl(0, rData[FAST_REFCOUNT_OFFSET]);
+      m_as.cmpw(0, rData[FAST_REFCOUNT_OFFSET]);
       doJcc(CC_L);
     } else {
       // We should only get here if this CheckType should've been simplified
@@ -6161,15 +6161,15 @@ void CodeGenerator::cgProfileStr(IRInstruction* inst) {
     },
     [&](Asm& a) { // m_type == KindOfString
       a.loadq(ptrReg[TVOFF(m_data)], m_rScratch);
-      a.cmpl(StaticValue, m_rScratch[FAST_REFCOUNT_OFFSET]);
+      a.cmpw(StaticValue, m_rScratch[FAST_REFCOUNT_OFFSET]);
 
       ifThenElse(
         a, CC_E,
         [&](Asm& a) { // _count == StaticValue
-          a.incl(rVmTl[ch + offsetof(StrProfile, strStatic)]);
+          a.incw(rVmTl[ch + offsetof(StrProfile, strStatic)]);
         },
         [&](Asm& a) {
-          a.incl(rVmTl[ch + offsetof(StrProfile, str)]);
+          a.incw(rVmTl[ch + offsetof(StrProfile, str)]);
         }
       );
     }
