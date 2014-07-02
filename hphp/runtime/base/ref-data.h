@@ -135,7 +135,7 @@ struct RefData {
     assert(m_magic == Magic::kMagic);
   }
 
-  int16_t getRealCount() const {
+  int8_t getRealCount() const {
     assert(m_cow == 0 || (m_cow == 1 && m_count >= 1));
     return m_count + m_cow;
   }
@@ -198,7 +198,7 @@ struct RefData {
     }
   }
 
-  int16_t zRefcount() {
+  int8_t zRefcount() {
     return getRealCount();
   }
 
@@ -279,6 +279,7 @@ public:
   struct {
     mutable RefCount m_count;
     UNUSED uint16_t pad1;
+    UNUSED uint8_t pad2;
   };
 private:
   TypedValue m_tv;
@@ -308,6 +309,7 @@ public:
       struct {
         mutable RefCount m_count; // refcount field (16 bits, we pad it to 32)
         UNUSED uint16_t pad1;
+        UNUSED uint8_t pad2;
       }
     };
   };

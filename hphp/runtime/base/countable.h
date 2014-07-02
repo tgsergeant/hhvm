@@ -38,7 +38,7 @@ namespace HPHP {
 /*
  * RefCount type for m_count field in refcounted objects
  */
-typedef int16_t RefCount;
+typedef int8_t RefCount;
 
 /*
  * This bit flags a reference count as "static".  If a reference count
@@ -51,14 +51,14 @@ typedef int16_t RefCount;
 #define STATIC      UNCOUNTED + 1
 
 // UNCOUNT and STATIC imply negative values so this bit check is valid
-constexpr size_t UncountedBitPos = 15;
-const int16_t UncountedValue = UNCOUNTED;
-const int16_t StaticValue = STATIC; // implies UncountedValue
-const int16_t RefCountMaxRealistic = (1 << 14) - 1;
+constexpr size_t UncountedBitPos = 7;
+const int8_t UncountedValue = UNCOUNTED;
+const int8_t StaticValue = STATIC; // implies UncountedValue
+const int8_t RefCountMaxRealistic = (1 << 6) - 1;
 
-static_assert((uint16_t)UncountedValue & (1 << UncountedBitPos),
+static_assert((uint8_t)UncountedValue & (1 << UncountedBitPos),
               "Check UncountedValue and UncountedBitPos");
-static_assert((uint16_t)StaticValue & (1 << UncountedBitPos),
+static_assert((uint8_t)StaticValue & (1 << UncountedBitPos),
               "Check StaticValue and UncountedBitPos");
 
 /*
@@ -78,31 +78,31 @@ const size_t FAST_REFCOUNT_OFFSET = 12;
  * common malloc freed-memory patterns (e.g. 0x5a5a5a5a and smart
  * allocator's 0x6a6a6a6a).
  */
-inline void assert_refcount_realistic(int16_t count) {
+inline void assert_refcount_realistic(int8_t count) {
   assert(count <= StaticValue ||
-         (uint16_t)count <= (uint16_t)RefCountMaxRealistic);
+         (uint8_t)count <= (uint8_t)RefCountMaxRealistic);
 }
 
 /*
  * As above, but additionally check for non-zero
  */
-inline void assert_refcount_realistic_nz(int16_t count) {
+inline void assert_refcount_realistic_nz(int8_t count) {
   assert(count <= StaticValue ||
-         (uint16_t)count - 1 < (uint16_t)RefCountMaxRealistic);
+         (uint8_t)count - 1 < (uint8_t)RefCountMaxRealistic);
 }
 
 /*
  * Check that the refcount is realistic, and not the static flag
  */
-inline void assert_refcount_realistic_ns(int16_t count) {
-  assert((uint16_t)count <= (uint16_t)RefCountMaxRealistic);
+inline void assert_refcount_realistic_ns(int8_t count) {
+  assert((uint8_t)count <= (uint8_t)RefCountMaxRealistic);
 }
 
 /*
  * As above, but additionally check for greater-than-zero
  */
-inline void assert_refcount_realistic_ns_nz(int16_t count) {
-  assert((uint16_t)count - 1 < (uint16_t)RefCountMaxRealistic);
+inline void assert_refcount_realistic_ns_nz(int8_t count) {
+  assert((uint8_t)count - 1 < (uint8_t)RefCountMaxRealistic);
 }
 
 #define DECREF_AND_RELEASE_MAYBE_STATIC(thiz, action) do {              \
@@ -134,12 +134,12 @@ inline void assert_refcount_realistic_ns_nz(int16_t count) {
                                                                         \
   bool hasMultipleRefs() const {                                        \
     assert_refcount_realistic(m_count);                                 \
-    return (uint16_t)m_count > 1;                                       \
+    return (uint8_t)m_count > 1;                                       \
   }                                                                     \
                                                                         \
   bool hasExactlyOneRef() const {                                       \
     assert_refcount_realistic(m_count);                                 \
-    return (uint16_t)m_count == 1;                                      \
+    return (uint8_t)m_count == 1;                                      \
   }                                                                     \
                                                                         \
   void incRefCount() const {                                            \

@@ -930,9 +930,11 @@ public:
   void incq(Reg64 r)  { instrR(instr_inc,  r); }
   void incl(Reg32 r)  { instrR(instr_inc,  r); }
   void incw(Reg16 r)  { instrR(instr_inc,  r); }
+  void incb(Reg8 r)   { instrR(instr_inc,  r); }
   void decq(Reg64 r)  { instrR(instr_dec,  r); }
   void decl(Reg32 r)  { instrR(instr_dec,  r); }
   void decw(Reg16 r)  { instrR(instr_dec,  r); }
+  void decb(Reg8 r)   { instrR(instr_dec,  r); }
   void notb(Reg8 r)   { instrR(instr_notb, r); }
   void not(Reg64 r)   { instrR(instr_not,  r); }
   void neg(Reg64 r)   { instrR(instr_neg,  r); }
@@ -952,16 +954,20 @@ public:
   void incq(MemoryRef m) { instrM(instr_inc,  m); }
   void incl(MemoryRef m) { instrM32(instr_inc, m); }
   void incw(MemoryRef m) { instrM16(instr_inc, m); }
+  void incb(MemoryRef m) { instrM8(instr_inc, m); }
   void decq(MemoryRef m) { instrM(instr_dec,  m); }
   void decl(MemoryRef m) { instrM32(instr_dec, m); }
   void decw(MemoryRef m) { instrM16(instr_dec, m); }
+  void decb(MemoryRef m) { instrM8(instr_dec, m); }
 
   void incq(IndexedMemoryRef m) { instrM(instr_inc,  m); }
   void incl(IndexedMemoryRef m) { instrM32(instr_inc, m); }
   void incw(IndexedMemoryRef m) { instrM16(instr_inc, m); }
+  void incb(IndexedMemoryRef m) { instrM8(instr_inc, m); }
   void decq(IndexedMemoryRef m) { instrM(instr_dec,  m); }
   void decl(IndexedMemoryRef m) { instrM32(instr_dec, m); }
   void decw(IndexedMemoryRef m) { instrM16(instr_dec, m); }
+  void decb(IndexedMemoryRef m) { instrM8(instr_dec, m); }
 
   void movdqu(RegXMM x, MemoryRef m)        { instrRM(instr_movdqu, x, m); }
   void movdqu(RegXMM x, IndexedMemoryRef m) { instrRM(instr_movdqu, x, m); }
@@ -1876,6 +1882,11 @@ public:
   }
 
   ALWAYS_INLINE
+  void emitM8(X64Instr op, RegNumber br, RegNumber ir, int s, int disp) {
+    emitCMX(op, 0, br, ir, s, disp, reg::noreg, false, 0, false, sz::byte);
+  }
+
+  ALWAYS_INLINE
   void emitCM(X64Instr op, int jcond, RegNumber br,
               RegNumber ir, int s, int disp, int opSz = sz::qword) {
     emitCMX(op, jcond, br, ir, s, disp, reg::noreg, false, 0, false, opSz);
@@ -2041,6 +2052,8 @@ private:
   void instrM32(X64Instr op, IndexedMemoryRef m) { emitM32(op,  UIMR(m));      }
   void instrM16(X64Instr op, MemoryRef m)        { emitM16(op,  UMR(m));       }
   void instrM16(X64Instr op, IndexedMemoryRef m) { emitM16(op,  UIMR(m));      }
+  void instrM8(X64Instr op, MemoryRef m)         { emitM8(op,  UMR(m));        }
+  void instrM8(X64Instr op, IndexedMemoryRef m)  { emitM8(op,  UIMR(m));       }
 
   void instrRM(X64Instr op,
                Reg64 r,
