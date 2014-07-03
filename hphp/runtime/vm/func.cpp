@@ -546,14 +546,16 @@ bool Func::byRef(int32_t arg) const {
 }
 
 const StaticString s_extract("extract");
+const StaticString s_array_multisort("array_multisort");
 
 bool Func::mustBeRef(int32_t arg) const {
   if (!byRef(arg)) return false;
   if (arg == 0) {
-    if (UNLIKELY(m_attrs & AttrNative)) {
+    if (UNLIKELY(m_attrs & AttrBuiltin)) {
       // Extract is special (in more ways than one)---here it needs
       // to be able to take its first argument by ref or not by ref.
       if (name() == s_extract.get() && !cls()) return false;
+      if (name() == s_array_multisort.get() && !cls()) return false;
     }
   }
   return
