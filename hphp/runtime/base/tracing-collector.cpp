@@ -112,10 +112,10 @@ int64_t MarkSweepCollector::markHeap() {
 
   const ActRec* const fp = g_context->getFP();
   const TypedValue *const sp = g_context->getStack().top();
-  const Offset offset = fp->m_func->base();
+  const Offset offset = fp->m_func->unit()->offsetOf(g_context->getPC()); //fp->m_func->base();
 
   for(auto ent : fp->m_func->fpitab()) {
-    FTRACE(2, "Offset: {}\n", ent->m_fpOff);
+    FTRACE(2, "Offset: {}\n", ent.m_fpOff);
   }
   visitStackElems(fp, sp, offset,
       [&](const ActRec *ar) {
