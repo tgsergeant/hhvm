@@ -282,8 +282,11 @@ include_directories(${CCLIENT_INCLUDE_PATH})
 
 find_package(LibDwarf REQUIRED)
 include_directories(${LIBDWARF_INCLUDE_DIRS})
-if (LIBDWARF_HAVE_ENCODE_LEB128)
-	add_definitions("-DHAVE_LIBDWARF_20130729")
+if (LIBDWARF_CONST_NAME)
+  add_definitions("-DLIBDWARF_CONST_NAME")
+endif()
+if (LIBDWARF_USE_INIT_C)
+  add_definitions("-DLIBDWARF_USE_INIT_C")
 endif()
 
 find_package(LibElf REQUIRED)
