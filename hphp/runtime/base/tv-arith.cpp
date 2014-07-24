@@ -591,24 +591,18 @@ void cellBitNot(Cell& cell) {
     break;
 
   case KindOfString:
-    if (cell.m_data.pstr->hasMultipleRefs()) {
-    case KindOfStaticString:
+  case KindOfStaticString:
+    {
+      //Always copy
       auto const newSd = StringData::Make(
         cell.m_data.pstr->slice(),
         CopyString
       );
       newSd->incRefCount();
-      cell.m_data.pstr->decRefCount(); // can't go to zero
+      cell.m_data.pstr->decRefAndRelease(); // can go to zero
       cell.m_data.pstr = newSd;
       cell.m_type = KindOfString;
-    } else {
-      // Unless we go through this branch, the string was just freshly
-      // created, so the following mutation will be safe wrt its
-      // internal hash caching.
-      cell.m_data.pstr->invalidateHash();
-    }
 
-    {
       auto const sd   = cell.m_data.pstr;
       auto const len  = sd->size();
       auto const data = sd->mutableData();
