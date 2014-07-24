@@ -1601,9 +1601,7 @@ ArrayData* MixedArray::ArrayPlusEqGeneric(ArrayData* ad,
 ArrayData* MixedArray::PlusEq(ArrayData* ad, const ArrayData* elems) {
   auto const neededSize = ad->size() + elems->size();
 
-  auto ret =
-    ad->hasMultipleRefs() ? CopyReserve(asMixed(ad), neededSize) :
-    asMixed(ad);
+  auto ret = CopyReserve(asMixed(ad), neededSize);
 
   if (UNLIKELY(!elems->isMixed())) {
     return ArrayPlusEqGeneric(ad, ret, elems, neededSize);
