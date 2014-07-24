@@ -1172,10 +1172,6 @@ int64_t new_iter_array_cold(Iter* dest, ArrayData* arr, TypedValue* valOut,
 int64_t new_iter_array(Iter* dest, ArrayData* ad, TypedValue* valOut) {
   TRACE(2, "%s: I %p, ad %p\n", __func__, dest, ad);
   if (UNLIKELY(ad->getSize() == 0)) {
-    if (UNLIKELY(ad->hasExactlyOneRef())) {
-      if (ad->isPacked()) return iter_next_free_packed(dest, ad);
-      if (ad->isMixed()) return iter_next_free_mixed(dest, ad);
-    }
     ad->decRefCount();
     return 0;
   }
@@ -1219,10 +1215,6 @@ int64_t new_iter_array_key(Iter*       dest,
                            TypedValue* valOut,
                            TypedValue* keyOut) {
   if (UNLIKELY(ad->getSize() == 0)) {
-    if (UNLIKELY(ad->hasExactlyOneRef())) {
-      if (ad->isPacked()) return iter_next_free_packed(dest, ad);
-      if (ad->isMixed()) return iter_next_free_mixed(dest, ad);
-    }
     ad->decRefCount();
     return 0;
   }
@@ -1489,9 +1481,6 @@ static int64_t iter_next_apc_array(Iter* iter,
   auto const arr = APCLocalArray::asSharedArray(ad);
   ssize_t const pos = arr->iterAdvanceImpl(arrIter->getPos());
   if (UNLIKELY(pos == ArrayData::invalid_index)) {
-    if (UNLIKELY(arr->hasExactlyOneRef())) {
-      return iter_next_free_apc(iter, arr);
-    }
     arr->decRefCount();
     if (debug) {
       iter->arr().setIterType(ArrayIter::TypeUndefined);
@@ -1542,9 +1531,6 @@ int64_t witer_next_key(Iter* iter, TypedValue* valOut, TypedValue* keyOut) {
     if (LIKELY(isPacked)) {
       ssize_t pos = arrIter->getPos() + 1;
       if (size_t(pos) >= size_t(ad->getSize())) {
-        if (UNLIKELY(ad->hasExactlyOneRef())) {
-          return iter_next_free_packed(iter, ad);
-        }
         ad->decRefCount();
         if (debug) {
           iter->arr().setIterType(ArrayIter::TypeUndefined);
@@ -1571,9 +1557,6 @@ int64_t witer_next_key(Iter* iter, TypedValue* valOut, TypedValue* keyOut) {
     do {
       ++pos;
       if (size_t(pos) >= size_t(mixed->iterLimit())) {
-        if (UNLIKELY(mixed->hasExactlyOneRef())) {
-          return iter_next_free_mixed(iter, mixed->asArrayData());
-        }
         mixed->decRefCount();
         if (debug) {
           iter->arr().setIterType(ArrayIter::TypeUndefined);
@@ -1698,9 +1681,6 @@ int64_t iter_next_mixed_impl(Iter* it,
 
   do {
     if (size_t(++pos) >= size_t(arr->iterLimit())) {
-      if (UNLIKELY(arr->hasExactlyOneRef())) {
-        return iter_next_free_mixed(it, arr->asArrayData());
-      }
       arr->decRefCount();
       if (debug) {
         iter.setIterType(ArrayIter::TypeUndefined);
@@ -1759,9 +1739,6 @@ int64_t iter_next_packed_impl(Iter* it,
   }
 
   // Finished iterating---we need to free the array.
-  if (UNLIKELY(ad->hasExactlyOneRef())) {
-    return iter_next_free_packed(it, ad);
-  }
   ad->decRefCount();
   if (debug) {
     iter.setIterType(ArrayIter::TypeUndefined);
