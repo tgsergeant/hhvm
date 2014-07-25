@@ -168,6 +168,7 @@ cd ..
 
 # curl
 cd curl
+git checkout curl-7_37_0
 ./buildconf
 ./configure --prefix=$CMAKE_PREFIX_PATH
 make -j $CPUS
