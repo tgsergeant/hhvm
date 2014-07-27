@@ -324,6 +324,7 @@ public:
   static MixedArray* asMixed(ArrayData* ad);
   static const MixedArray* asMixed(const ArrayData* ad);
 
+  static ArrayData* ArrayPlusEqShouldCopy(ArrayData *, const ArrayData *, bool copy);
 private:
   static void getElmKey(const Elm& e, TypedValue* out);
 
