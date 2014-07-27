@@ -157,8 +157,6 @@ public:
     m_read.callback = src->m_read.callback;
     m_write_header.callback = src->m_write_header.callback;
 
-    reset();
-
     m_to_free = src->m_to_free;
     m_emptyPost = src->m_emptyPost;
   }
