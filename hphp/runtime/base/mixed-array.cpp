@@ -1598,10 +1598,10 @@ ArrayData* MixedArray::ArrayPlusEqGeneric(ArrayData* ad,
 
 // Note: the logic relating to how to grow in this function is coupled
 // to PackedArray::PlusEq.
-ArrayData* MixedArray::PlusEq(ArrayData* ad, const ArrayData* elems) {
+ArrayData* MixedArray::ArrayPlusEqShouldCopy(ArrayData* ad, const ArrayData* elems, bool copy) {
   auto const neededSize = ad->size() + elems->size();
 
-  auto ret = CopyReserve(asMixed(ad), neededSize);
+  auto ret = copy ? CopyReserve(asMixed(ad), neededSize) : asMixed(ad);
 
   if (UNLIKELY(!elems->isMixed())) {
     return ArrayPlusEqGeneric(ad, ret, elems, neededSize);
@@ -1637,6 +1637,10 @@ ArrayData* MixedArray::PlusEq(ArrayData* ad, const ArrayData* elems) {
   }
 
   return ret;
+}
+
+ArrayData* MixedArray::PlusEq(ArrayData* ad, const ArrayData* elems) {
+  return ArrayPlusEqShouldCopy(ad, elems, true);
 }
 
 NEVER_INLINE

@@ -674,11 +674,10 @@ ArrayData* PackedArray::PlusEq(ArrayData* adIn, const ArrayData* elems) {
   auto const neededSize = adIn->size() + elems->size();
   auto const mixed = ToMixedCopyReserve(adIn, neededSize);
   try {
-    auto const ret = MixedArray::PlusEq(mixed, elems);
+    auto const ret = MixedArray::ArrayPlusEqShouldCopy(mixed, elems, false);
 
-    //AFAICT this doesn't actually matter, apart from the fact that we copy twice
-    //assert(ret == mixed);
-    //assert(!mixed->hasMultipleRefs());
+    assert(ret == mixed);
+    assert(!mixed->hasMultipleRefs());
     return ret;
   } catch (...) {
     MixedArray::Release(mixed);
