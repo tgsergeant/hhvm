@@ -289,7 +289,7 @@ public:
   /*
    * Get an lval reference to a newly created element.
    */
-  Variant& lvalAt();
+  Variant& lvalAt(bool copy = true);
 
   /*
    * Get an lval reference to an element.
@@ -301,8 +301,8 @@ public:
     return lvalAtImpl(key, flags);
   }
   Variant& lvalAt(double key, ACCESSPARAMS_DECL) = delete;
-  Variant& lvalAt(const String& key, ACCESSPARAMS_DECL);
-  Variant& lvalAt(const Variant& key, ACCESSPARAMS_DECL);
+  Variant& lvalAt(const String& key, ACCESSPARAMS_DECL, bool copy = true);
+  Variant& lvalAt(const Variant& key, ACCESSPARAMS_DECL, bool copy = true);
 
   /*
    * Set an element to a value.
@@ -407,10 +407,10 @@ public:
   }
 
   template<typename T>
-  Variant& lvalAtImpl(const T& key, ACCESSPARAMS_DECL) {
+  Variant& lvalAtImpl(const T& key, ACCESSPARAMS_DECL, bool copy = true) {
     if (!m_px) ArrayBase::operator=(ArrayData::Create());
     Variant* ret = nullptr;
-    ArrayData* escalated = m_px->lval(key, ret, true);
+    ArrayData* escalated = m_px->lval(key, ret, copy);
     if (escalated != m_px) ArrayBase::operator=(escalated);
     assert(ret);
     return *ret;

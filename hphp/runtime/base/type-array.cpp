@@ -496,26 +496,26 @@ Variant Array::rvalAt(const Variant& key, ACCESSPARAMS_IMPL) const {
   return Array::rvalAtRef(key, flags);
 }
 
-Variant &Array::lvalAt() {
+Variant &Array::lvalAt(bool copy) {
   if (!m_px) ArrayBase::operator=(ArrayData::Create());
   Variant *ret = nullptr;
   ArrayData *arr = m_px;
-  ArrayData *escalated = arr->lvalNew(ret, true);
+  ArrayData *escalated = arr->lvalNew(ret, copy);
   if (escalated != arr) ArrayBase::operator=(escalated);
   assert(ret);
   return *ret;
 }
 
-Variant &Array::lvalAt(const String& key, ACCESSPARAMS_IMPL) {
-  if (flags & AccessFlags::Key) return lvalAtImpl(key, flags);
-  return lvalAtImpl(key.toKey(), flags);
+Variant &Array::lvalAt(const String& key, ACCESSPARAMS_IMPL, bool copy) {
+  if (flags & AccessFlags::Key) return lvalAtImpl(key, flags, copy);
+  return lvalAtImpl(key.toKey(), flags, copy);
 }
 
-Variant &Array::lvalAt(const Variant& key, ACCESSPARAMS_IMPL) {
-  if (flags & AccessFlags::Key) return lvalAtImpl(key, flags);
+Variant &Array::lvalAt(const Variant& key, ACCESSPARAMS_IMPL, bool copy) {
+  if (flags & AccessFlags::Key) return lvalAtImpl(key, flags, copy);
   VarNR k(key.toKey());
   if (!k.isNull()) {
-    return lvalAtImpl(k, flags);
+    return lvalAtImpl(k, flags, copy);
   }
   return lvalBlackHole();
 }
@@ -751,7 +751,7 @@ void Array::unserialize(VariableUnserializer *uns) {
       // for apc, we know the key can't exist, but ignore that optimization
       assert(uns->getType() != VariableUnserializer::Type::APCSerialize ||
              !exists(key, true));
-      Variant &value = lvalAt(key, AccessFlags::Key);
+      Variant &value = lvalAt(key, AccessFlags::Key, false);
       value.unserialize(uns);
     }
   }
