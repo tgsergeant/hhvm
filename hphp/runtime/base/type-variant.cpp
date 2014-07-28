@@ -739,7 +739,7 @@ static void unserializeProp(VariableUnserializer *uns,
     //
     // TODO(#2881866): this assumption means we can't do reallocations
     // when promoting kPackedKind -> kMixedKind.
-    t = &obj->reserveProperties(nProp).lvalAt(realKey, AccessFlags::Key);
+    t = &obj->reserveProperties(nProp).lvalAt(realKey, AccessFlags::Key, false);
   }
 
   t->unserialize(uns);
