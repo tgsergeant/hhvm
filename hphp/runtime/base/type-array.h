@@ -294,11 +294,11 @@ public:
   /*
    * Get an lval reference to an element.
    */
-  Variant& lvalAt(int key, ACCESSPARAMS_DECL) {
-    return lvalAtImpl(key, flags);
+  Variant& lvalAt(int key, ACCESSPARAMS_DECL, bool copy = true) {
+    return lvalAtImpl(key, flags, copy);
   }
-  Variant& lvalAt(int64_t key, ACCESSPARAMS_DECL) {
-    return lvalAtImpl(key, flags);
+  Variant& lvalAt(int64_t key, ACCESSPARAMS_DECL, bool copy = true) {
+    return lvalAtImpl(key, flags, copy);
   }
   Variant& lvalAt(double key, ACCESSPARAMS_DECL) = delete;
   Variant& lvalAt(const String& key, ACCESSPARAMS_DECL, bool copy = true);

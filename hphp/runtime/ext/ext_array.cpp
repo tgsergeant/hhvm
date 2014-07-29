@@ -2268,7 +2268,7 @@ bool f_array_multisort(int _argc, VRefParam ar1,
   int sort_flags = SORT_REGULAR;
   bool ascending = true;
   for (int i = 0; i < _argv.size(); i++) {
-    Variant *v = &((Array&)_argv).lvalAt(i);
+    Variant *v = &((Array&)_argv).lvalAt(i, AccessFlags::None, false);
     auto const cell = v->asCell();
     if (cell->m_type == KindOfArray) {
       sd.cmp_func = get_cmp_func(sort_flags, ascending);
