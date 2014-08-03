@@ -633,21 +633,16 @@ bool MemoryManager::checkPreFree(DebugHeader* p,
            userSpecifiedBytes == p->returnedCap);
   }
   if (bytes != 0 && bytes <= kMaxSmartSize) {
-    //This is failing on a lot of the debugger tests. I have no idea what
-    //is causing it, but it doesn't appear to be causing anything bad.
-    //Maybe there are arrays that are allocated outside of the normal paths
-    //which are being removed when they should not be?
-
-    //auto const ptrInt = reinterpret_cast<uintptr_t>(p);
-    //auto it = std::find_if(
-      //begin(m_slabs), end(m_slabs),
-      //[&] (MemoryManager::Slab slab) {
-        //auto const baseInt = reinterpret_cast<uintptr_t>(slab.base);
-        //FTRACE(3, "Base: {}, Top: {}, ptr: {}\n", (void *)baseInt, (void *)(baseInt + SLAB_SIZE), (void *)ptrInt);
-        //return ptrInt >= baseInt && ptrInt < baseInt + SLAB_SIZE;
-      //}
-    //);
-    //assert(it != end(m_slabs));
+    auto const ptrInt = reinterpret_cast<uintptr_t>(p);
+    auto it = std::find_if(
+      begin(m_slabs), end(m_slabs),
+      [&] (MemoryManager::Slab slab) {
+        auto const baseInt = reinterpret_cast<uintptr_t>(slab.base);
+        FTRACE(3, "Base: {}, Top: {}, ptr: {}\n", (void *)baseInt, (void *)(baseInt + SLAB_SIZE), (void *)ptrInt);
+        return ptrInt >= baseInt && ptrInt < baseInt + SLAB_SIZE;
+      }
+    );
+    assert(it != end(m_slabs));
   }
 
   return true;
