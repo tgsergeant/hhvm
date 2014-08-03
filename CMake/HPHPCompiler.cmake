@@ -56,8 +56,10 @@ endif()
 
 if(CMAKE_COMPILER_IS_GNUCC)
 	set(CMAKE_C_FLAGS_RELEASE "-O3")
+	set(CMAKE_C_FLAGS_DEBUG "-O0 -ggdb")
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX)
 	set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+	set(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb")
 endif()
