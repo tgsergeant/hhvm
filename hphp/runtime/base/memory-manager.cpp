@@ -177,6 +177,11 @@ MemoryManager::MemoryManager()
   // make the circular-lists empty.
   m_sweep.next = m_sweep.prev = &m_sweep;
   m_strings.next = m_strings.prev = &m_strings;
+
+  Block empty;
+  empty.head = nullptr;
+  empty.end = nullptr;
+  m_currentBlock = empty;
 }
 
 void MemoryManager::resetStatsImpl(bool isInternalCall) {
@@ -295,6 +300,15 @@ void MemoryManager::resetAllocator() {
     free(slab.base);
   }
   m_slabs.clear();
+
+  while(!m_availableBlocks.empty()) {
+    m_availableBlocks.pop();
+  }
+  Block empty;
+  empty.head = nullptr;
+  empty.end = nullptr;
+  m_currentBlock = empty;
+
   resetStatsImpl(true);
 
   // free large allocation blocks
