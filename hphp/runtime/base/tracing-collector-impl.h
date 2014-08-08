@@ -23,6 +23,7 @@
 #include "hphp/runtime/base/memory-manager.h"
 
 #include <unordered_map>
+#include <queue>
 
 
 namespace HPHP {
@@ -57,6 +58,8 @@ private:
   };
 
   int64_t markHeap();
+
+  void markStackFrame(const ActRec *fp, int offset, const TypedValue *ftop);
 
   /*
    * Grab the data about current slabs from the memory
@@ -96,6 +99,8 @@ private:
   std::vector<SlabData> m_slabs;
 
   std::unordered_map<void *, size_t> slabLookup;
+
+  std::queue<TypedValue> m_searchQ;
 };
 
 MarkSweepCollector &gc();

@@ -14,8 +14,8 @@
    +----------------------------------------------------------------------+
 */
 
-#include <queue>
 #include <iostream>
+#include <string>
 
 #include "hphp/runtime/base/tracing-collector-impl.h"
 
@@ -84,11 +84,11 @@ int64_t MarkSweepCollector::collect() {
 
   for(auto sd : m_slabs) {
     FTRACE(1, "Used: {}\n{}\n\n", (void *)sd.slab.base, sd.usedBlocks.to_string());
-    FTRACE(1, "Allocated: {}\n{}\n\n", (void *)sd.slab.base, sd.slab.allocatedBlocks.to_string());
+    //FTRACE(1, "Allocated: {}\n{}\n\n", (void *)sd.slab.base, sd.slab.allocatedBlocks.to_string());
 
     auto blocksToFree = ~ sd.usedBlocks & sd.slab.allocatedBlocks;
 
-    FTRACE(1, "To free:\n{}\n\n", blocksToFree.to_string());
+    //FTRACE(1, "To free:\n{}\n\n", blocksToFree.to_string());
 
     //Should remain disabled until we know that gc_enabled objects are not being collected elsewhere
     //(Otherwise they could end up on a freelist as well as in the block allocator)
@@ -104,32 +104,81 @@ int64_t MarkSweepCollector::collect() {
   return 0;
 }
 
+void MarkSweepCollector::markStackFrame(const ActRec *fp, int offset, const TypedValue *ftop) {
+  const Func *func = fp->m_func;
+  func->validate();
+  std::string funcName(func->fullName()->data());
+
+  FTRACE(2, "Visiting: {} at offset {}\n", funcName.c_str(), fp->m_soff);
+
+
+  if(fp->hasThis()) {
+    TypedValue thisTv;
+    thisTv.m_data.pobj = fp->getThis();
+    thisTv.m_type = KindOfObject;
+    m_searchQ.push(thisTv);
+  }
+
+  //Check out the local variables
+  TypedValue *tv = (TypedValue *)fp;
+  tv --;
+  if (func->numLocals() > 0) {
+    int n = func->numLocals();
+    for (int i = 0; i < n; i++) {
+      m_searchQ.push(*tv);
+      tv --;
+    }
+  }
+
+  //See if the stack holds any secrets
+  visitStackElems(fp, ftop, offset,
+      [&](const ActRec *ar) {
+        std::string funcName(ar->m_func->fullName()->data());
+        FTRACE(1, "HELP I FOUND AN ACTREC WAT DO: {}, {} at {}\n", ar, funcName.c_str(), ar->m_soff);
+        //markStackFrame(ar, 
+      },
+      [&](const TypedValue *tv) {
+        FTRACE(2, "Found a typedvalue in the stack: {}\n", tv);
+        m_searchQ.push(*tv);
+      }
+  );
+
+  //Try and step down within the stack
+  {
+    Offset prevPc = 0;
+    TypedValue *prevStackTop = nullptr;
+    ActRec *prevFp = g_context->getPrevVMState(fp, &prevPc, &prevStackTop);
+    if (prevFp != nullptr) {
+      markStackFrame(prevFp, prevPc, prevStackTop);
+    }
+  }
+}
+
 int64_t MarkSweepCollector::markHeap() {
-  Stack& stack = g_context->getStack();
-  TypedValue *current = (TypedValue *)stack.getStackHighAddress();
-
-  std::queue<TypedValue> searchQ;
-
   const ActRec* const fp = g_context->getFP();
-  const TypedValue *const sp = (TypedValue *)g_context->getStack().getStackLowAddress();
+  const TypedValue *const sp = (TypedValue *)g_context->getStack().top();
+  int offset = (fp->m_func->unit() != nullptr)
+               ? fp->unit()->offsetOf(g_context->getPC())
+               : 0;
+  //TRACE(1, g_context->getStack().toString(fp, offset));
+  markStackFrame(fp, offset, sp);
 
-  // TODO Enumerate roots
-
-  FTRACE(3, "Found {} roots\n", searchQ.size());
+  FTRACE(2, "Found {} roots\n", m_searchQ.size());
+  // Checks
 
   TypedValue cur;
   VariableSerializer s(VariableSerializer::Type::VarDump);
 
-  while (!searchQ.empty()) {
-    cur = searchQ.front();
-    searchQ.pop();
+  while (!m_searchQ.empty()) {
+    cur = m_searchQ.front();
+    m_searchQ.pop();
 
     if(cur.m_type == DataType::KindOfArray) {
       TRACE(3, "Found array\n");
       if(cur.m_data.parr) {
         for(ArrayIter iter(cur.m_data.parr); iter; ++iter) {
-          searchQ.push(*iter.first().asTypedValue());
-          searchQ.push(*iter.second().asTypedValue());
+          m_searchQ.push(*iter.first().asTypedValue());
+          m_searchQ.push(*iter.second().asTypedValue());
 
           markReachable(cur.m_data.parr);
         }
@@ -140,7 +189,7 @@ int64_t MarkSweepCollector::markHeap() {
 
     if(cur.m_type == DataType::KindOfRef) {
       TRACE(3, "Found a ref\n");
-      searchQ.push(*cur.m_data.pref->tv());
+      m_searchQ.push(*cur.m_data.pref->tv());
       markReachable(cur.m_data.pref);
     }
 
@@ -159,7 +208,7 @@ int64_t MarkSweepCollector::markHeap() {
       //First go through all of the properties which are defined by the class
       for(auto i = 0; i < propCount; i++) {
         const TypedValue *prop = props + i;
-        searchQ.push(*prop);
+        m_searchQ.push(*prop);
       }
 
       //Then, if there are dynamic properties
@@ -171,7 +220,7 @@ int64_t MarkSweepCollector::markHeap() {
         TypedValue dynTv;
         dynTv.m_data.parr = dynProps.get();
         dynTv.m_type = DataType::KindOfArray;
-        searchQ.push(dynTv);
+        m_searchQ.push(dynTv);
 
       }
       markReachable(od);
@@ -222,7 +271,7 @@ void MarkSweepCollector::markReachable(void *ptr) {
   MarkSweepCollector::SlabData *sd = getSlabData(ptr);
   if(sd) {
     size_t blockId = MemoryManager::getBlockId(sd->slab, ptr);
-    FTRACE(2, "Marked {} as reachable (block {})\n", ptr, blockId);
+    FTRACE(3, "Marked {} as reachable (block {})\n", ptr, blockId);
 
     sd->usedBlocks.set(blockId);
   }
@@ -239,7 +288,7 @@ bool MarkSweepCollector::isReachable(void *ptr) {
 
 void MarkSweepCollector::markDestructable(ObjectData const *obj) {
   destructable.push_back(obj);
-  FTRACE(1, "Marked {} as destructable\n", obj);
+  FTRACE(3, "Marked {} as destructable\n", obj);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
