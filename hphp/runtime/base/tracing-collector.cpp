@@ -163,14 +163,25 @@ void MarkSweepCollector::printStack() {
   TRACE(1, g_context->getStack().toString(fp, offset));
 }
 
+StaticString s_globals("GLOBALS");
+
 int64_t MarkSweepCollector::markHeap() {
   const ActRec* const fp = g_context->getFP();
   const TypedValue *const sp = (TypedValue *)g_context->getStack().top();
   int offset = (fp->m_func->unit() != nullptr)
                ? fp->unit()->offsetOf(g_context->getPC())
                : 0;
-  //TRACE(1, g_context->getStack().toString(fp, offset));
+  TRACE(1, g_context->getStack().toString(fp, offset));
+
+  //Main source of roots
   markStackFrame(fp, offset, sp);
+
+  //Also use $GLOBALS
+  auto globals = g_context->m_globalVarEnv->lookup(s_globals.get());
+  if (globals != nullptr) {
+    FTRACE(2, "Found globals\n");
+    m_searchQ.push(*globals);
+  }
 
   FTRACE(2, "Found {} roots\n", m_searchQ.size());
   // Checks
