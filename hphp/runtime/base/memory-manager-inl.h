@@ -214,7 +214,6 @@ inline void* MemoryManager::smartMallocSize(uint32_t bytes) {
   assert(reinterpret_cast<uintptr_t>(p) % 16 == 0);
 
   FTRACE(3, "smartMallocSize: {} -> {}\n", bytes, p);
-  track_refcount_operation(RC_ALLOC, p, bytes);
   return debugPostAllocate(p, bytes, bytes);
 }
 
@@ -241,7 +240,6 @@ std::pair<void*,size_t> MemoryManager::smartMallocSizeBig(size_t bytes) {
     smartMallocSizeBigHelper<callerSavesActualSize>(ptr, sz, bytes);
   FTRACE(3, "smartMallocBig: {} ({} requested, {} usable)\n",
          retptr, bytes, sz);
-  track_refcount_operation(RC_ALLOC, retptr, bytes);
   return std::make_pair(retptr, sz);
 #else
   m_stats.usage += bytes;
@@ -281,12 +279,14 @@ ALWAYS_INLINE
 void* MemoryManager::smartMallocSizeLogged(uint32_t size) {
   auto const retptr = smartMallocSize(size);
   if (memory_profiling) { logAllocation(retptr, size); }
+  track_refcount_operation(RC_ALLOC, retptr, size);
   return retptr;
 }
 
 ALWAYS_INLINE
 void MemoryManager::smartFreeSizeLogged(void* p, uint32_t size) {
   if (memory_profiling) { logDeallocation(p); }
+  track_refcount_operation(RC_RELEASE, p);
   return smartFreeSize(p, size);
 }
 
@@ -295,12 +295,14 @@ ALWAYS_INLINE
 std::pair<void*,size_t> MemoryManager::smartMallocSizeBigLogged(size_t size) {
   auto const retptr = smartMallocSizeBig<callerSavesActualSize>(size);
   if (memory_profiling) { logAllocation(retptr.first, size); }
+  track_refcount_operation(RC_ALLOC, retptr.first, size);
   return retptr;
 }
 
 ALWAYS_INLINE
 void MemoryManager::smartFreeSizeBigLogged(void* vp, size_t size) {
   if (memory_profiling) { logDeallocation(vp); }
+  track_refcount_operation(RC_RELEASE, vp);
   return smartFreeSizeBig(vp, size);
 }
 
@@ -308,12 +310,14 @@ ALWAYS_INLINE
 void* MemoryManager::objMallocLogged(size_t size) {
   auto const retptr = objMalloc(size);
   if (memory_profiling) { logAllocation(retptr, size); }
+  track_refcount_operation(RC_ALLOC, retptr, size);
   return retptr;
 }
 
 ALWAYS_INLINE
 void MemoryManager::objFreeLogged(void* vp, size_t size) {
   if (memory_profiling) { logDeallocation(vp); }
+  track_refcount_operation(RC_RELEASE, vp);
   return objFree(vp, size);
 }
 

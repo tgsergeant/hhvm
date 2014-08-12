@@ -110,7 +110,6 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     assert_refcount_realistic_nz(thiz->m_count);                        \
     if (thiz->m_count == 1) {                                           \
       action;                                                           \
-      track_refcount_operation(RC_RELEASE, thiz);                       \
     } else if (thiz->m_count > 1) {                                     \
       --thiz->m_count;                                                  \
       track_refcount_operation(RC_DEC, thiz, thiz->m_count);            \
@@ -221,7 +220,6 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     --m_count;                                          \
     if (!m_count) {                                     \
       release();                                        \
-      track_refcount_operation(RC_RELEASE, this);       \
       return true;                                      \
     }                                                   \
     else {                                              \

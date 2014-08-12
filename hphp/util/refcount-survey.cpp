@@ -160,10 +160,10 @@ void RefcountSurvey::track_refcount_request_end() {
 
     dump_global_survey();
 
-    TRACE(2, "\n\nMemory activity over time\nTimeslot,Releases,Allocations,Allocation Size\n");
+    TRACE(2, "\n\nMemory activity over time\nTimeslot,Releases,Released Size,Allocations,Allocation Size\n");
     for(int i = 0; i < timed_activity.size(); i++) {
       auto r = timed_activity[i];
-      FTRACE(2, "{},{},{},{}\n", i + 1, r.deallocations, r.allocations, r.allocations_size);
+      FTRACE(2, "{},{},{},{},{}\n", i + 1, r.releases, r.releases_size, r.allocations, r.allocations_size);
     }
     FTRACE(2, "{},{},,\n", timed_activity.size() + 1, live_values.size());
 
@@ -188,11 +188,18 @@ void RefcountSurvey::track_refcount_request_end() {
 void RefcountSurvey::track_release(const void *address) {
   auto live_value = live_values.find(address);
   if(live_value != live_values.end()) {
-    refcount_sizes.incr(live_value->second.max_refcount);
+    auto max_ref = live_value->second.max_refcount;
+    if (max_ref > 0) {
+      refcount_sizes.incr(live_value->second.max_refcount);
+    }
+
     increment_lifetime_bucket(live_value->second.allocation_time);
     live_values.erase(live_value);
+
+    auto bucket = get_current_bucket();
+    bucket->releases += 1;
+    bucket->releases_size += live_value->second.size;
   }
-  get_current_bucket()->deallocations += 1;
 }
 
 
@@ -205,12 +212,7 @@ void RefcountSurvey::track_change(const void *address, int32_t value) {
   }
 
   auto live_value = live_values.find(address);
-  if (live_value == live_values.end()) {
-    live_values[address] = ObjectLifetimeData();
-    live_values[address].allocation_time = total_ops;
-    live_values[address].max_refcount = value;
-  }
-  else {
+  if (live_value != live_values.end()) {
     if(live_value->second.max_refcount < value) {
       live_values[address].max_refcount = value;
     }
@@ -247,6 +249,11 @@ void RefcountSurvey::track_alloc(const void *address, int32_t value) {
     size = 128;
   }
   object_sizes.incr(size);
+
+  live_values[address] = ObjectLifetimeData();
+  live_values[address].allocation_time = total_ops;
+  live_values[address].max_refcount = -1;
+  live_values[address].size = value;
 }
 
 void RefcountSurvey::increment_lifetime_bucket(long allocation_time) {

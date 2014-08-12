@@ -39,7 +39,8 @@ RefcountSurvey &survey();
  * Where a unit of time is TIME_GRANULARITY operations
  */
 struct TimeDeltaActivity {
-  int deallocations;
+  int releases;
+  long releases_size;
   int allocations;
   long allocations_size;
 };
@@ -48,6 +49,7 @@ struct TimeDeltaActivity {
 struct ObjectLifetimeData {
   int max_refcount;
   long allocation_time;
+  int32_t size;
 };
 
 /*
