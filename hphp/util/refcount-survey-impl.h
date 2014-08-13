@@ -96,7 +96,9 @@ private:
    */
   void track_alloc(const void *address, int32_t value);
 
-  void increment_lifetime_bucket(long allocation_time);
+  void increment_lifetime_bucket(long allocation_time, int size);
+
+  void print_lifetime_graph();
 
   /**
    * Return this thread to its initial state at the end of a request

@@ -136,6 +136,23 @@ void RefcountSurvey::OnThreadExit(RefcountSurvey *survey) {
   survey->~RefcountSurvey();
 }
 
+void RefcountSurvey::print_lifetime_graph() {
+    FTRACE(2, "\nTotal allocated: {}\n", time());
+    TRACE(2, "\n\nFraction of bytes still alive at time n after their allocation\n");
+    TRACE(2, "Time (MB allocated),Fraction of live bytes\n");
+
+    long bytes_remaining = time();
+    long total_bytes = time();
+    for (int i = 0; i < object_lifetimes.size(); i++) {
+      bytes_remaining -= object_lifetimes.get(i);
+      FTRACE(2, "{},{:.3f}\n", i, (double)bytes_remaining/total_bytes);
+    }
+
+    TRACE(4, "\n\nRaw lifetimes\n");
+    TRACE(4, "Lifetime class, Bytes released\n");
+    FTRACE(4, object_lifetimes.print(false, LIFETIME_GRANULARITY));
+}
+
 void RefcountSurvey::track_refcount_request_end() {
   //Processing that needs to be done before we print results
   SYNCHRONIZED(global_refcount_sizes) {
@@ -145,7 +162,7 @@ void RefcountSurvey::track_refcount_request_end() {
     global_object_sizes.add(object_sizes);
   }
   for(auto obj : live_values) {
-    increment_lifetime_bucket(obj.second.allocation_time);
+    increment_lifetime_bucket(obj.second.allocation_time, obj.second.size);
   }
 
   // Then print the results (but only if the request was something interesting)
@@ -161,12 +178,7 @@ void RefcountSurvey::track_refcount_request_end() {
 
     dump_global_survey();
 
-
-    // TODO change this graph
-    TRACE(2, "\n\nObject lifetimes\n");
-    TRACE(2, "Time bucket,Frequency\n");
-    TRACE(2, object_lifetimes.print(false, LIFETIME_GRANULARITY));
-    FTRACE(2, "\nTotal allocated: {}\n", time());
+    print_lifetime_graph();
 
     TRACE(3, "\n\nRequest Object Sizes\n");
     TRACE(3, "Size,Frequency\n");
@@ -188,7 +200,7 @@ void RefcountSurvey::track_release(const void *address) {
       refcount_sizes.incr(live_value->second.max_refcount);
     }
 
-    increment_lifetime_bucket(live_value->second.allocation_time);
+    increment_lifetime_bucket(live_value->second.allocation_time, live_value->second.size);
     live_values.erase(live_value);
   }
 }
@@ -244,13 +256,16 @@ void RefcountSurvey::track_alloc(const void *address, int32_t value) {
   live_values[address].size = value;
 }
 
-void RefcountSurvey::increment_lifetime_bucket(long allocation_time) {
+void RefcountSurvey::increment_lifetime_bucket(long allocation_time, int bytes) {
   long lifetime = time() - allocation_time;
+
   int lifetime_bucket = (int)((double)lifetime / LIFETIME_GRANULARITY) + 1;
+
   if(lifetime_bucket > object_lifetimes.size()) {
     lifetime_bucket = object_lifetimes.size() - 1;
   }
-  object_lifetimes.incr(lifetime_bucket);
+
+  object_lifetimes.add(lifetime_bucket, bytes);
 }
 
 void RefcountSurvey::reset() {
