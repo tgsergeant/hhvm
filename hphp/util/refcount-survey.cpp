@@ -143,9 +143,18 @@ void RefcountSurvey::print_lifetime_graph() {
 
     long bytes_remaining = time();
     long total_bytes = time();
-    for (int i = 0; i < object_lifetimes.size(); i++) {
+
+    TRACE(2, "0,1.000\n");
+    for (int i = 0; i < small_object_lifetimes.size(); i++) {
+      bytes_remaining -= small_object_lifetimes.get(i);
+      FTRACE(2, "{:.3f},{:.3f}\n",
+          (double)((i + 1) * SMALL_LIFETIME_GRANULARITY)/1024,
+          (double)bytes_remaining/total_bytes);
+    }
+
+    for (int i = 1; i < object_lifetimes.size(); i++) {
       bytes_remaining -= object_lifetimes.get(i);
-      FTRACE(2, "{},{:.3f}\n", i, (double)bytes_remaining/total_bytes);
+      FTRACE(2, "{},{:.3f}\n", i + 1, (double)bytes_remaining/total_bytes);
     }
 
     TRACE(4, "\n\nRaw lifetimes\n");
@@ -259,13 +268,21 @@ void RefcountSurvey::track_alloc(const void *address, int32_t value) {
 void RefcountSurvey::increment_lifetime_bucket(long allocation_time, int bytes) {
   long lifetime = time() - allocation_time;
 
-  int lifetime_bucket = (int)((double)lifetime / LIFETIME_GRANULARITY) + 1;
+  if (lifetime >= LIFETIME_GRANULARITY) {
+    int lifetime_bucket = (int)((double)lifetime / LIFETIME_GRANULARITY);
+    if(lifetime_bucket > object_lifetimes.size()) {
+      lifetime_bucket = object_lifetimes.size() - 1;
+    }
 
-  if(lifetime_bucket > object_lifetimes.size()) {
-    lifetime_bucket = object_lifetimes.size() - 1;
+    object_lifetimes.add(lifetime_bucket, bytes);
   }
+  else {
+    int small_bucket = (int)((double)lifetime / SMALL_LIFETIME_GRANULARITY);
 
-  object_lifetimes.add(lifetime_bucket, bytes);
+    //No need to check for out of bounds
+
+    small_object_lifetimes.add(small_bucket, bytes);
+  }
 }
 
 void RefcountSurvey::reset() {

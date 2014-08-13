@@ -32,6 +32,7 @@ RefcountSurvey &survey();
 
 #define TIME_GRANULARITY 1024
 #define LIFETIME_GRANULARITY 1024
+#define SMALL_LIFETIME_GRANULARITY 32
 
 
 /*
@@ -79,7 +80,10 @@ private:
   // 'Large' objects are lumped into the 128th slot
   Histogram<129> object_sizes;
 
-  Histogram<512> object_lifetimes;
+  Histogram<256> object_lifetimes;
+
+  Histogram<LIFETIME_GRANULARITY / SMALL_LIFETIME_GRANULARITY> small_object_lifetimes;
+
 
   void track_change(const void *address, int32_t value);
   /**
