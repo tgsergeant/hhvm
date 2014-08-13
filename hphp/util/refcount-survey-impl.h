@@ -30,8 +30,8 @@ struct RefcountSurvey;
  */
 RefcountSurvey &survey();
 
-#define TIME_GRANULARITY 10000
-#define LIFETIME_GRANULARITY 5000
+#define TIME_GRANULARITY 1024
+#define LIFETIME_GRANULARITY 1024
 
 
 /*
@@ -67,22 +67,19 @@ struct RefcountSurvey {
 
 private:
   // 'Time' spent in this request so far
-  long total_ops = 0;
+  long total_allocated = 0;
 
   // Data about objects we know to be live in the heap
   boost::unordered_map<const void *, ObjectLifetimeData> live_values;
 
-  // Data for each time step
-  std::vector<TimeDeltaActivity> timed_activity;
-
   // The number of dead objects which reached each refcount value
-  Histogram<32> refcount_sizes;
+  Histogram<256> refcount_sizes;
 
   // Number of objects in each size bucket (freelists)
   // 'Large' objects are lumped into the 128th slot
   Histogram<129> object_sizes;
 
-  Histogram<250> object_lifetimes;
+  Histogram<512> object_lifetimes;
 
   void track_change(const void *address, int32_t value);
   /**
@@ -102,14 +99,11 @@ private:
   void increment_lifetime_bucket(long allocation_time);
 
   /**
-   * Get or create a bucket for the current time slot
-   */
-  TimeDeltaActivity *get_current_bucket();
-
-  /**
    * Return this thread to its initial state at the end of a request
    */
   void reset();
+
+  long time() { return total_allocated; }
 };
 
 }

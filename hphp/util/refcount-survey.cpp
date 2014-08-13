@@ -28,7 +28,7 @@ namespace HPHP {
 TRACE_SET_MOD(rcsurvey);
 
 //Global variable to track the total reference sizes
-folly::Synchronized<Histogram<32>, folly::RWSpinLock> global_refcount_sizes;
+folly::Synchronized<Histogram<256>, folly::RWSpinLock> global_refcount_sizes;
 
 folly::Synchronized<Histogram<129>, folly::RWSpinLock> global_object_sizes;
 
@@ -149,7 +149,7 @@ void RefcountSurvey::track_refcount_request_end() {
   }
 
   // Then print the results (but only if the request was something interesting)
-  if(total_ops > 15000) {
+  if(time() > 15000) {
     TRACE(1, "\n-----Start of report-----\n");
 
     auto const stats = MM().getStats();
@@ -157,21 +157,16 @@ void RefcountSurvey::track_refcount_request_end() {
     FTRACE(1, "Peak usage,\t\t{}\n", stats.peakUsage);
     FTRACE(1, "Peak allocation,\t{}\n", stats.peakAlloc);
     FTRACE(1, "Total allocation,\t{}\n", stats.totalAlloc);
+    FTRACE(1, "Objects live at end of request: {},,\n", live_values.size());
 
     dump_global_survey();
 
-    TRACE(2, "\n\nMemory activity over time\nTimeslot,Releases,Released Size,Allocations,Allocation Size\n");
-    for(int i = 0; i < timed_activity.size(); i++) {
-      auto r = timed_activity[i];
-      FTRACE(2, "{},{},{},{},{}\n", i + 1, r.releases, r.releases_size, r.allocations, r.allocations_size);
-    }
-    FTRACE(2, "{},{},,\n", timed_activity.size() + 1, live_values.size());
 
-
+    // TODO change this graph
     TRACE(2, "\n\nObject lifetimes\n");
     TRACE(2, "Time bucket,Frequency\n");
     TRACE(2, object_lifetimes.print(false, LIFETIME_GRANULARITY));
-    FTRACE(2, "\nTotal operations: {}\n", total_ops);
+    FTRACE(2, "\nTotal allocated: {}\n", time());
 
     TRACE(3, "\n\nRequest Object Sizes\n");
     TRACE(3, "Size,Frequency\n");
@@ -195,10 +190,6 @@ void RefcountSurvey::track_release(const void *address) {
 
     increment_lifetime_bucket(live_value->second.allocation_time);
     live_values.erase(live_value);
-
-    auto bucket = get_current_bucket();
-    bucket->releases += 1;
-    bucket->releases_size += live_value->second.size;
   }
 }
 
@@ -220,7 +211,6 @@ void RefcountSurvey::track_change(const void *address, int32_t value) {
 }
 
 void RefcountSurvey::track_refcount_operation(RefcountOperation op, const void *address, int32_t value) {
-  total_ops ++;
 
   switch(op) {
     case RC_RELEASE:
@@ -238,9 +228,7 @@ void RefcountSurvey::track_refcount_operation(RefcountOperation op, const void *
 }
 
 void RefcountSurvey::track_alloc(const void *address, int32_t value) {
-  TimeDeltaActivity *bucket = get_current_bucket();
-  bucket->allocations += 1;
-  bucket->allocations_size += value;
+  total_allocated += value;
 
   int size;
   if(value < 2048) {
@@ -251,13 +239,13 @@ void RefcountSurvey::track_alloc(const void *address, int32_t value) {
   object_sizes.incr(size);
 
   live_values[address] = ObjectLifetimeData();
-  live_values[address].allocation_time = total_ops;
+  live_values[address].allocation_time = time();
   live_values[address].max_refcount = -1;
   live_values[address].size = value;
 }
 
 void RefcountSurvey::increment_lifetime_bucket(long allocation_time) {
-  long lifetime = total_ops - allocation_time;
+  long lifetime = time() - allocation_time;
   int lifetime_bucket = (int)((double)lifetime / LIFETIME_GRANULARITY) + 1;
   if(lifetime_bucket > object_lifetimes.size()) {
     lifetime_bucket = object_lifetimes.size() - 1;
@@ -270,16 +258,7 @@ void RefcountSurvey::reset() {
   object_sizes.clear();
   live_values.clear();
   object_lifetimes.clear();
-  timed_activity.clear();
-  total_ops = 0;
-}
-
-TimeDeltaActivity *RefcountSurvey::get_current_bucket() {
-  int bucket = total_ops / TIME_GRANULARITY;
-  if(timed_activity.size() <= bucket) {
-    timed_activity.push_back(TimeDeltaActivity());
-  }
-  return &timed_activity[bucket];
+  total_allocated = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
