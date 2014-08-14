@@ -31,7 +31,6 @@ AsioExternalThreadEvent::AsioExternalThreadEvent(ObjectData* priv_data)
 
 void AsioExternalThreadEvent::abandon() {
   assert(m_state.load() == Waiting);
-  assert(m_waitHandle->hasExactlyOneRef());
   m_state.store(Abandoned);
   m_waitHandle->abandon(false);
 }

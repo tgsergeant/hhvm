@@ -696,95 +696,24 @@ void CodeGenerator::cgAssertType(IRInstruction* inst) {
 
 void CodeGenerator::emitDecRefStaticType(Type type,
                                          vixl::Register dataReg) {
-  assert(type.isKnownDataType());
-  assert(!dataReg.Is(rAsm2));
-
-  vixl::Label allDone;
-
-  m_as.  Ldr  (rAsm2.W(), dataReg[FAST_REFCOUNT_OFFSET]);
-
-  if (type.needsStaticBitCheck()) {
-    m_as.Tbnz (rAsm2, UncountedBitPos, &allDone);
-  }
-
-  m_as.  Sub  (rAsm2.W(), rAsm2.W(), 1, vixl::SetFlags);
-  m_as.  Str  (rAsm2.W(), dataReg[FAST_REFCOUNT_OFFSET]);
-
-  m_as.  B    (&allDone, vixl::ne);
-  cgCallHelper(m_as,
-               MCGenerator::getDtorCall(type.toDataType()),
-               kVoidDest,
-               SyncOptions::kSyncPoint,
-               argGroup().reg(dataReg));
-
-  m_as.  bind (&allDone);
 }
 
 void CodeGenerator::emitDecRefDynamicType(vixl::Register baseReg,
                                           int offset) {
-  // Make sure both temp registers are still available
-  assert(!baseReg.Is(rAsm));
-  assert(!baseReg.Is(rAsm2));
-
-  vixl::Label allDone;
-
-  // Check the type
-  m_as.  Ldrb (rAsm.W(), baseReg[offset + TVOFF(m_type)]);
-  m_as.  Cmp  (rAsm.W(), KindOfRefCountThreshold);
-  m_as.  B    (&allDone, vixl::le);
-
-  // Type is refcounted. Load the refcount.
-  m_as.  Ldr  (rAsm, baseReg[offset + TVOFF(m_data)]);
-  m_as.  Ldr  (rAsm2.W(), rAsm[FAST_REFCOUNT_OFFSET]);
-
-  // Is it static? Note that only the lower 32 bits of rAsm2 are valid right
-  // now, but tbnz is only looking at a single one of them, so this is OK.
-  m_as.  Tbnz (rAsm2, UncountedBitPos, &allDone);
-
-  // Not static. Decrement and write back.
-  m_as.  Sub  (rAsm2.W(), rAsm2.W(), 1, vixl::SetFlags);
-  m_as.  Str  (rAsm2.W(), rAsm[FAST_REFCOUNT_OFFSET]);
-
-  // Did it go to zero?
-  m_as.  B    (&allDone, vixl::ne);
-
-  // Went to zero. Have to destruct.
-  cgCallHelper(m_as,
-               CppCall::direct(tv_release_generic),
-               kVoidDest,
-               SyncOptions::kSyncPoint,
-               argGroup().addr(baseReg, offset));
-
-  m_as.  bind (&allDone);
 }
 
 void CodeGenerator::emitDecRefMem(Type type,
                                   vixl::Register baseReg,
                                   int offset) {
-  if (type.needsReg()) {
-    emitDecRefDynamicType(baseReg, offset);
-  } else if (type.maybeCounted()) {
-    m_as.  Ldr  (rAsm, baseReg[offset + TVOFF(m_data)]);
-    emitDecRefStaticType(type, rAsm);
-  }
 }
 
 void CodeGenerator::cgDecRefStack(IRInstruction* inst) {
-  emitDecRefMem(inst->typeParam(),
-                x2a(srcLoc(0).reg()),
-                cellsToBytes(inst->extra<DecRefStack>()->offset));
 }
 
 void CodeGenerator::cgDecRefLoc(IRInstruction* inst) {
-  emitDecRefMem(inst->typeParam(),
-                x2a(srcLoc(0).reg()),
-                localOffset(inst->extra<DecRefLoc>()->locId));
 }
 
 void CodeGenerator::cgDecRefMem(IRInstruction* inst) {
-  emitDecRefMem(inst->typeParam(),
-                x2a(srcLoc(0).reg()),
-                inst->src(1)->intVal());
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -189,7 +189,6 @@ class ObjectData {
   static void DeleteObject(ObjectData* p);
 
   void release() {
-    assert(!hasMultipleRefs());
     if (LIKELY(destruct())) DeleteObject(this);
   }
 

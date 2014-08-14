@@ -58,7 +58,6 @@ class ResourceData {
   void operator delete(void* p) { ::operator delete(p); }
 
   void release() {
-    assert(!hasMultipleRefs());
     delete this;
   }
 

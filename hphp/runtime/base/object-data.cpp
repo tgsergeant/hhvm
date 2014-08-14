@@ -1065,7 +1065,6 @@ TypedValue* ObjectData::getProp(Class* ctx, const StringData* key,
       // We are using an HphpArray for storage, but not really
       // treating it as a normal array, so this cast is safe in this
       // situation.
-      assert(!dynPropArray()->hasMultipleRefs());
       assert(dynPropArray()->isMixed());
       return const_cast<TypedValue*>(prop);
     }

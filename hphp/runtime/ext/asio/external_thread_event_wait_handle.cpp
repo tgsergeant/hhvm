@@ -90,7 +90,6 @@ void c_ExternalThreadEventWaitHandle::destroyEvent(bool sweeping /*= false */) {
 
 void c_ExternalThreadEventWaitHandle::abandon(bool sweeping) {
   assert(getState() == STATE_WAITING);
-  assert(hasExactlyOneRef() || sweeping);
 
   if (isInContext()) {
     unregisterFromContext();

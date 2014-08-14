@@ -606,7 +606,6 @@ void cellBitNot(Cell& cell) {
       auto const sd   = cell.m_data.pstr;
       auto const len  = sd->size();
       auto const data = sd->mutableData();
-      assert(sd->hasExactlyOneRef());
       for (uint32_t i = 0; i < len; ++i) {
         data[i] = ~data[i];
       }

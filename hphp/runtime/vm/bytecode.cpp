@@ -1320,7 +1320,6 @@ void ExecutionContext::shuffleExtraStackArgs(ActRec* ar) {
       // ... and now remove them from the stack
       m_stack.ndiscard(numVarArgs);
       auto const ad = varArgsArray.detach();
-      assert(ad->hasExactlyOneRef());
       m_stack.pushArrayNoRc(ad);
       // Before, for each arg: refcount = n + 1 (stack)
       // After, for each arg: refcount = n + 2 (ExtraArgs, varArgsArray)
@@ -1339,7 +1338,6 @@ void ExecutionContext::shuffleExtraStackArgs(ActRec* ar) {
     // variadic args array so we don't need to decref the values.
     m_stack.ndiscard(numVarArgs);
     auto const ad = varArgsArray.detach();
-    assert(ad->hasExactlyOneRef());
     m_stack.pushArrayNoRc(ad);
     assert(func->numParams() == (numArgs - numVarArgs + 1));
     ar->setNumArgs(func->numParams());
@@ -1535,7 +1533,6 @@ static bool prepareArrayArgs(ActRec* ar, const Cell& args,
     if (hasVarParam) {
       auto const ad = ai.create();
       stack.pushArray(ad);
-      assert(ad->hasExactlyOneRef());
     }
     ar->initNumArgs(nargs);
     ar->setExtraArgs(extraArgs);
@@ -1554,7 +1551,6 @@ static bool prepareArrayArgs(ActRec* ar, const Cell& args,
       assert(!iter); // iter should now be exhausted
       auto const ad = ai.create();
       stack.pushArray(ad);
-      assert(ad->hasExactlyOneRef());
     }
     ar->initNumArgs(f->numParams());
   }

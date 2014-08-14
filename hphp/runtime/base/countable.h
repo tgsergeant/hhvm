@@ -76,40 +76,27 @@ const size_t FAST_REFCOUNT_OFFSET = 12;
  * allocator's 0x6a6a6a6a).
  */
 inline void assert_refcount_realistic(int32_t count) {
-  assert(count <= StaticValue ||
-         (uint32_t)count <= (uint32_t)RefCountMaxRealistic);
 }
 
 /*
  * As above, but additionally check for non-zero
  */
 inline void assert_refcount_realistic_nz(int32_t count) {
-  assert(count <= StaticValue ||
-         (uint32_t)count - 1 < (uint32_t)RefCountMaxRealistic);
 }
 
 /*
  * Check that the refcount is realistic, and not the static flag
  */
 inline void assert_refcount_realistic_ns(int32_t count) {
-  assert((uint32_t)count <= (uint32_t)RefCountMaxRealistic);
 }
 
 /*
  * As above, but additionally check for greater-than-zero
  */
 inline void assert_refcount_realistic_ns_nz(int32_t count) {
-  assert((uint32_t)count - 1 < (uint32_t)RefCountMaxRealistic);
 }
 
 #define DECREF_AND_RELEASE_MAYBE_STATIC(thiz, action) do {              \
-    assert(!MemoryManager::sweeping());                                 \
-    assert_refcount_realistic_nz(thiz->m_count);                        \
-    if (thiz->m_count == 1) {                                           \
-      /*action;*/                                                       \
-    } else if (thiz->m_count > 1) {                                     \
-      --thiz->m_count;                                                  \
-    }                                                                   \
   } while (false)
 
 /**
@@ -129,24 +116,19 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
                                                                         \
   bool hasMultipleRefs() const {                                        \
     assert_refcount_realistic(m_count);                                 \
-    return (uint32_t)m_count > 1;                                       \
+    return true;                                                        \
   }                                                                     \
                                                                         \
   bool hasExactlyOneRef() const {                                       \
     assert_refcount_realistic(m_count);                                 \
-    return (uint32_t)m_count == 1;                                      \
+    return false;                                                       \
   }                                                                     \
                                                                         \
   void incRefCount() const {                                            \
-    assert(!MemoryManager::sweeping());                                 \
-    assert_refcount_realistic(m_count);                                 \
-    if (isRefCounted()) { ++m_count; }                                  \
   }                                                                     \
                                                                         \
   RefCount decRefCount() const {                                        \
-    assert(!MemoryManager::sweeping());                                 \
-    assert_refcount_realistic_nz(m_count);                              \
-    return isRefCounted() ? --m_count : m_count;                        \
+    return m_count;                                                     \
   }                                                                     \
                                                                         \
   ALWAYS_INLINE void decRefAndRelease() {                               \
@@ -180,33 +162,22 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
                                                         \
   bool hasMultipleRefs() const {                        \
     assert_refcount_realistic_ns(m_count);              \
-    return m_count > 1;                                 \
+    return true;                                        \
   }                                                     \
                                                         \
   bool hasExactlyOneRef() const {                       \
     assert_refcount_realistic(m_count);                 \
-    return m_count == 1;                                \
+    return false;                                       \
   }                                                     \
                                                         \
   void incRefCount() const {                            \
-    assert(!MemoryManager::sweeping());                 \
-    assert_refcount_realistic_ns(m_count);              \
-    ++m_count;                                          \
   }                                                     \
                                                         \
   RefCount decRefCount() const {                        \
-    assert(!MemoryManager::sweeping());                 \
-    assert_refcount_realistic_ns_nz(m_count);           \
-    return --m_count;                                   \
+    return m_count;                                     \
   }                                                     \
                                                         \
   ALWAYS_INLINE bool decRefAndRelease() {               \
-    assert(!MemoryManager::sweeping());                 \
-    assert_refcount_realistic_ns_nz(m_count);           \
-    if (!--m_count) {                                   \
-      /*release();*/                                    \
-      return true;                                      \
-    }                                                   \
     return false;                                       \
   }
 

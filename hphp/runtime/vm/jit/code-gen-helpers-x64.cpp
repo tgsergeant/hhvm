@@ -168,33 +168,12 @@ void emitTransCounterInc(Asm& a) {
 }
 
 void emitIncRef(Asm& as, PhysReg base) {
-  if (RuntimeOption::EvalHHIRGenerateAsserts) {
-    emitAssertRefCount(as, base);
-  }
-  // emit incref
-  as.incl(base[FAST_REFCOUNT_OFFSET]);
-  if (RuntimeOption::EvalHHIRGenerateAsserts) {
-    // Assert that the ref count is greater than zero
-    emitAssertFlagsNonNegative(as);
-  }
 }
 
 void emitIncRefCheckNonStatic(Asm& as, PhysReg base, DataType dtype) {
-  { // if !static then
-    IfCountNotStatic ins(as, base, dtype);
-    emitIncRef(as, base);
-  } // endif
 }
 
 void emitIncRefGenericRegSafe(Asm& as, PhysReg base, int disp, PhysReg tmpReg) {
-  { // if RC
-    IfRefCounted irc(as, base, disp);
-    as.   loadq  (base[disp + TVOFF(m_data)], tmpReg);
-    { // if !static
-      IfCountNotStatic ins(as, tmpReg);
-      as. incl(tmpReg[FAST_REFCOUNT_OFFSET]);
-    } // endif
-  } // endif
 }
 
 void emitAssertFlagsNonNegative(Asm& as) {

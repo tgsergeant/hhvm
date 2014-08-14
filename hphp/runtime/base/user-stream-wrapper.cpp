@@ -40,7 +40,7 @@ File* UserStreamWrapper::open(const String& filename, const String& mode,
     return nullptr;
   }
   DEBUG_ONLY auto tmp = wrapper.detach();
-  assert(tmp == file && file->hasExactlyOneRef());
+  assert(tmp == file);
   file->decRefCount();
   return file;
 }

@@ -556,11 +556,6 @@ TCA sswitchHelperFast(const StringData* val,
 
 // TODO(#2031980): clear these out
 void tv_release_generic(TypedValue* tv) {
-  assert(JIT::tx->stateIsDirty());
-  assert(tv->m_type == KindOfString || tv->m_type == KindOfArray ||
-         tv->m_type == KindOfObject || tv->m_type == KindOfResource ||
-         tv->m_type == KindOfRef);
-  g_destructors[typeToDestrIndex(tv->m_type)](tv->m_data.pref);
 }
 
 Cell lookupCnsHelper(const TypedValue* tv,
@@ -1021,7 +1016,6 @@ void shuffleExtraArgsVariadic(ActRec* ar) {
     auto tv = reinterpret_cast<TypedValue*>(ar) - numParams - 1;
     tv->m_type = KindOfArray;
     tv->m_data.parr = varArgsArray.detach();
-    assert(tv->m_data.parr->hasExactlyOneRef());
 
     // no incref is needed, since extra values are being transferred
     // from the stack to the last local
@@ -1048,7 +1042,6 @@ void shuffleExtraArgsVariadicAndVV(ActRec* ar) {
     auto tv = reinterpret_cast<TypedValue*>(ar) - numParams - 1;
     tv->m_type = KindOfArray;
     tv->m_data.parr = varArgsArray.detach();
-    assert(tv->m_data.parr->hasExactlyOneRef());
     // Before, for each arg: refcount = n + 1 (stack)
     // After, for each arg: refcount = n + 2 (ExtraArgs, varArgsArray)
   }

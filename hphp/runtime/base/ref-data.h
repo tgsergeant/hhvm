@@ -89,7 +89,6 @@ struct RefData {
    * Deallocate a RefData.
    */
   void release() {
-    assert(!hasMultipleRefs());
     if (UNLIKELY(m_cow)) {
       m_count = 1;
       m_cowAndZ = 0;
@@ -199,7 +198,6 @@ struct RefData {
 
   void zAddRef() {
     if (getRealCount() != 1) {
-      ++m_count;
       return;
     }
     assert(!m_cow);
@@ -212,7 +210,6 @@ struct RefData {
   void zDelRef() {
     if (getRealCount() != 2) {
       assert(getRealCount() != 0);
-      --m_count;
       return;
     }
     m_count = 1;
