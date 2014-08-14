@@ -177,6 +177,7 @@ void RefcountSurvey::track_refcount_request_end() {
   // Then print the results (but only if the request was something interesting)
   if(time() > 15000) {
     TRACE(1, "\n-----Start of report-----\n");
+    FTRACE(1, "URL: {}\n", g_context->getRequestUrl());
 
     auto const stats = MM().getStats();
     TRACE(1, "\n\nGeneral memory statistics\n");
