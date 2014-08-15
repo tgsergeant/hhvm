@@ -1,0 +1,43 @@
+object(HH\Vector)#%d (4) {
+  [0]=>
+  int(1)
+  [1]=>
+  object(stdClass)#%d (0) {
+  }
+  [2]=>
+  string(3) "foo"
+  [3]=>
+  object(stdClass)#%d (0) {
+  }
+}
+========
+object(HH\Map)#%d (4) {
+  ["a"]=>
+  int(1)
+  ["b"]=>
+  object(stdClass)#%d (0) {
+  }
+  [33]=>
+  string(3) "foo"
+  [44]=>
+  object(stdClass)#%d (0) {
+  }
+}
+========
+object(HH\Map)#%d (4) {
+  ["a"]=>
+  int(1)
+  ["b"]=>
+  object(stdClass)#%d (0) {
+  }
+  [33]=>
+  string(3) "foo"
+  [44]=>
+  object(stdClass)#%d (0) {
+  }
+}
+========
+object(HH\Set)#%d (2) {
+  int(1)
+  string(3) "foo"
+}

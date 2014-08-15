@@ -1,0 +1,7 @@
+object(A)#%d (1) {
+  ["a"]=>
+  object(A)#%d (1) {
+    ["a"]=>
+    *RECURSION*
+  }
+}

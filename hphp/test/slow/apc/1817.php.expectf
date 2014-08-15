@@ -1,0 +1,4 @@
+object(a)#%d (1) {
+  ["foo":protected]=>
+  int(10)
+}

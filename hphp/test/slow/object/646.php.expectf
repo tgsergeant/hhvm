@@ -1,4 +1,4 @@
-object(A)#1 (2) {
+object(A)#%d (2) {
   ["b"]=>
   int(3)
   ["a"]=>

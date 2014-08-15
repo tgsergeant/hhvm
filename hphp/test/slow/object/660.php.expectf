@@ -1,0 +1,12 @@
+object(A)#%d (2) {
+  ["a"]=>
+  string(2) "ok"
+  ["b"]=>
+  &string(2) "ok"
+}
+object(A)#%d (2) {
+  ["a"]=>
+  string(2) "ok"
+  ["b"]=>
+  &string(2) "ok"
+}

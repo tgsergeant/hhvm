@@ -1,5 +1,5 @@
 DOMComment
-object(DOMComment)#1 (0) {
+object(DOMComment)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DOMComment in %s/builtin_extensions.inc on line 8
@@ -61,7 +61,7 @@ array(26) {
 }
 ================
 A_DOMComment
-object(A_DOMComment)#2 (1) {
+object(A_DOMComment)#%d (1) {
   ["___x"]=>
   NULL
 }

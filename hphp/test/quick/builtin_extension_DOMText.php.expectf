@@ -1,5 +1,5 @@
 DOMText
-object(DOMText)#1 (0) {
+object(DOMText)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DOMText in %s/builtin_extensions.inc on line 8
@@ -65,7 +65,7 @@ array(28) {
 }
 ================
 A_DOMText
-object(A_DOMText)#2 (1) {
+object(A_DOMText)#%d (1) {
   ["___x"]=>
   NULL
 }

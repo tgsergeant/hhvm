@@ -1,0 +1,10 @@
+array(1) {
+  [0]=>
+  object(stdClass)#%d (1) {
+    ["foo"]=>
+    object(stdClass)#%d (1) {
+      ["bar"]=>
+      int(2)
+    }
+  }
+}

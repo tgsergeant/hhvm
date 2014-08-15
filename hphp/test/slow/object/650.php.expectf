@@ -1,0 +1,14 @@
+object(A)#%d (2) {
+  ["a"]=>
+  int(2)
+  ["b"]=>
+  int(1)
+}
+int(1)
+object(B)#%d (2) {
+  ["b"]=>
+  int(3)
+  ["a"]=>
+  int(2)
+}
+int(3)

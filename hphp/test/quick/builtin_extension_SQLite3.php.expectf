@@ -1,7 +1,7 @@
 SQLite3
 
 Warning: SQLite3::__construct() expects at least 1 parameter, 0 given in %s/builtin_extensions.inc on line 5
-object(SQLite3)#1 (0) {
+object(SQLite3)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class SQLite3 in %s/builtin_extensions.inc on line 8
@@ -49,7 +49,7 @@ array(18) {
 A_SQLite3
 
 Warning: SQLite3::__construct() expects at least 1 parameter, 0 given in %s/builtin_extensions.inc on line 23
-object(A_SQLite3)#2 (1) {
+object(A_SQLite3)#%d (1) {
   ["___x"]=>
   NULL
 }

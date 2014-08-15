@@ -1,5 +1,5 @@
 DOMDocumentFragment
-object(DOMDocumentFragment)#1 (0) {
+object(DOMDocumentFragment)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DOMDocumentFragment in %s/builtin_extensions.inc on line 8
@@ -53,7 +53,7 @@ array(22) {
 }
 ================
 A_DOMDocumentFragment
-object(A_DOMDocumentFragment)#2 (1) {
+object(A_DOMDocumentFragment)#%d (1) {
   ["___x"]=>
   NULL
 }

@@ -1,8 +1,8 @@
-object(foo)#1 (2) {
+object(foo)#%d (2) {
   ["test":"foo":private]=>
   int(3)
   ["a"]=>
-  object(Closure$foo::x;%s)#2 (1) {
+  object(Closure$foo::x;%s)#%d (1) {
     ["a":"Closure$foo::x;%s":private]=>
     *RECURSION*
   }

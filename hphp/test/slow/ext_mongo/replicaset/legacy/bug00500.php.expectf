@@ -52,7 +52,7 @@ array(5) {
   ["n"]=>
   int(1)
   ["lastOp"]=>
-  object(MongoTimestamp)#5 (2) {
+  object(MongoTimestamp)#%d (2) {
     ["sec"]=>
     int(%d)
     ["inc"]=>

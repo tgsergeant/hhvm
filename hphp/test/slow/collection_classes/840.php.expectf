@@ -1,0 +1,30 @@
+object(HH\Vector)#%d (5) {
+  [0]=>
+  object(HH\Map)#%d (1) {
+    ["a"]=>
+    int(1)
+  }
+  [1]=>
+  object(HH\Map)#%d (1) {
+    ["b"]=>
+    int(2)
+  }
+  [2]=>
+  object(HH\Set)#%d (1) {
+    string(1) "c"
+  }
+  [3]=>
+  object(HH\Map)#%d (2) {
+    ["d"]=>
+    int(4)
+    ["e"]=>
+    int(5)
+  }
+  [4]=>
+  object(HH\Map)#%d (2) {
+    ["d"]=>
+    int(4)
+    ["e"]=>
+    int(5)
+  }
+}

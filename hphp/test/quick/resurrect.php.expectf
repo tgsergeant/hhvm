@@ -1,0 +1,11 @@
+Test begin
+object(C)#%d (1) {
+  ["p"]=>
+  string(5) "C::$p"
+}
+In C::__destruct()
+object(C)#%d (1) {
+  ["p"]=>
+  string(7) "changed"
+}
+Test end
