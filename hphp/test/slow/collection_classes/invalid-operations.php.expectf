@@ -1,45 +1,45 @@
-object(HH\ImmVector)#2 (2) {
+object(HH\ImmVector)#%d (2) {
   [0]=>
-  object(HH\Vector)#3 (1) {
+  object(HH\Vector)#%d (1) {
     [0]=>
     int(1)
   }
   [1]=>
-  object(HH\Vector)#4 (1) {
+  object(HH\Vector)#%d (1) {
     [0]=>
     int(2)
   }
 }
-object(HH\ImmMap)#5 (2) {
+object(HH\ImmMap)#%d (2) {
   [0]=>
-  object(HH\Vector)#6 (1) {
+  object(HH\Vector)#%d (1) {
     [0]=>
     int(1)
   }
   [1]=>
-  object(HH\Vector)#7 (1) {
+  object(HH\Vector)#%d (1) {
     [0]=>
     int(2)
   }
 }
-object(HH\Pair)#8 (2) {
+object(HH\Pair)#%d (2) {
   [0]=>
-  object(HH\Vector)#9 (1) {
+  object(HH\Vector)#%d (1) {
     [0]=>
     int(1)
   }
   [1]=>
-  object(HH\Vector)#10 (1) {
+  object(HH\Vector)#%d (1) {
     [0]=>
     int(2)
   }
 }
 
-object(HH\ImmVector)#12 (2) {
+object(HH\ImmVector)#%d (2) {
   [0]=>
   array(1) {
     [0]=>
-    object(HH\Vector)#13 (1) {
+    object(HH\Vector)#%d (1) {
       [0]=>
       int(1)
     }
@@ -47,17 +47,17 @@ object(HH\ImmVector)#12 (2) {
   [1]=>
   array(1) {
     [0]=>
-    object(HH\Vector)#14 (1) {
+    object(HH\Vector)#%d (1) {
       [0]=>
       int(2)
     }
   }
 }
-object(HH\ImmMap)#15 (2) {
+object(HH\ImmMap)#%d (2) {
   [0]=>
   array(1) {
     [0]=>
-    object(HH\Vector)#16 (1) {
+    object(HH\Vector)#%d (1) {
       [0]=>
       int(1)
     }
@@ -65,17 +65,17 @@ object(HH\ImmMap)#15 (2) {
   [1]=>
   array(1) {
     [0]=>
-    object(HH\Vector)#17 (1) {
+    object(HH\Vector)#%d (1) {
       [0]=>
       int(2)
     }
   }
 }
-object(HH\Pair)#18 (2) {
+object(HH\Pair)#%d (2) {
   [0]=>
   array(1) {
     [0]=>
-    object(HH\Vector)#19 (1) {
+    object(HH\Vector)#%d (1) {
       [0]=>
       int(1)
     }
@@ -83,7 +83,7 @@ object(HH\Pair)#18 (2) {
   [1]=>
   array(1) {
     [0]=>
-    object(HH\Vector)#20 (1) {
+    object(HH\Vector)#%d (1) {
       [0]=>
       int(2)
     }

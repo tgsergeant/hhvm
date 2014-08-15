@@ -1,5 +1,5 @@
 DOMNotation
-object(DOMNotation)#1 (0) {
+object(DOMNotation)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DOMNotation in %s/builtin_extensions.inc on line 8
@@ -51,7 +51,7 @@ array(21) {
 }
 ================
 A_DOMNotation
-object(A_DOMNotation)#2 (1) {
+object(A_DOMNotation)#%d (1) {
   ["___x"]=>
   NULL
 }

@@ -1,7 +1,7 @@
 DateInterval
 
 Warning: DateInterval::__construct() expects exactly 1 parameter, 0 given in %s/builtin_extensions.inc on line 5
-object(DateInterval)#1 (0) {
+object(DateInterval)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DateInterval in %s/builtin_extensions.inc on line 8
@@ -23,7 +23,7 @@ array(5) {
 A_DateInterval
 
 Warning: DateInterval::__construct() expects exactly 1 parameter, 0 given in %s/builtin_extensions.inc on line 23
-object(A_DateInterval)#2 (1) {
+object(A_DateInterval)#%d (1) {
   ["___x"]=>
   NULL
 }

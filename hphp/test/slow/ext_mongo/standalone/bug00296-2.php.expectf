@@ -13,10 +13,10 @@ array(2) {
 }
 array(2) {
   ["upsert"]=>
-  object(stdClass)#2 (0) {
+  object(stdClass)#%d (0) {
   }
   ["multiple"]=>
-  object(stdClass)#3 (0) {
+  object(stdClass)#%d (0) {
   }
 }
 log_update

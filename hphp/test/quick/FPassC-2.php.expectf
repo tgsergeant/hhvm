@@ -2,11 +2,11 @@
 Warning: File not found: doesnotexist.php in %s on line 14
 bool(false)
 NULL
-object(stdClass)#1 (0) {
+object(stdClass)#%d (0) {
 }
-object(stdClass)#2 (0) {
+object(stdClass)#%d (0) {
 }
-object(stdClass)#1 (0) {
+object(stdClass)#%d (0) {
 }
 ==============================
 

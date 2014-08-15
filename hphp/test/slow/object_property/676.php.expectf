@@ -1,0 +1,10 @@
+object(A)#%d (1) {
+  ["b"]=>
+  string(6) "banana"
+}
+object(A)#%d (1) {
+  ["a"]=>
+  string(5) "apple"
+}
+string(5) "apple"
+string(6) "banana"

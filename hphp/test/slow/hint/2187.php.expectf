@@ -1,0 +1,26 @@
+array(8) {
+  [0]=>
+  object(bool)#%d (0) {
+  }
+  [1]=>
+  object(boolean)#%d (0) {
+  }
+  [2]=>
+  object(int)#%d (0) {
+  }
+  [3]=>
+  object(integer)#%d (0) {
+  }
+  [4]=>
+  object(double)#%d (0) {
+  }
+  [5]=>
+  object(float)#%d (0) {
+  }
+  [6]=>
+  object(real)#%d (0) {
+  }
+  [7]=>
+  object(string)#%d (0) {
+  }
+}

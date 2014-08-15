@@ -1,5 +1,5 @@
 DOMCharacterData
-object(DOMCharacterData)#1 (0) {
+object(DOMCharacterData)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DOMCharacterData in %s/builtin_extensions.inc on line 8
@@ -61,7 +61,7 @@ array(26) {
 }
 ================
 A_DOMCharacterData
-object(A_DOMCharacterData)#2 (1) {
+object(A_DOMCharacterData)#%d (1) {
   ["___x"]=>
   NULL
 }

@@ -3,17 +3,17 @@ string(3) "foo"
 
 Notice: Undefined variable: foo in %s/test/slow/object_property_expression/798.php on line 25
 string(3) "foo"
-object(X)#1 (4) {
+object(X)#%d (4) {
   ["a"]=>
   array(1) {
     ["x"]=>
-    object(Y)#2 (1) {
+    object(Y)#%d (1) {
       ["y"]=>
       NULL
     }
   }
   ["qq"]=>
-  object(Y)#4 (1) {
+  object(Y)#%d (1) {
     ["y"]=>
     int(1)
   }
@@ -24,7 +24,7 @@ object(X)#1 (4) {
 }
 array(0) {
 }
-object(stdClass)#3 (1) {
+object(stdClass)#%d (1) {
   ["t"]=>
   &NULL
 }

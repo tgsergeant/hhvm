@@ -1,5 +1,5 @@
 DOMImplementation
-object(DOMImplementation)#1 (0) {
+object(DOMImplementation)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DOMImplementation in %s/builtin_extensions.inc on line 8
@@ -17,7 +17,7 @@ array(4) {
 }
 ================
 A_DOMImplementation
-object(A_DOMImplementation)#2 (1) {
+object(A_DOMImplementation)#%d (1) {
   ["___x"]=>
   NULL
 }

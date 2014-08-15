@@ -1,5 +1,5 @@
 DOMDocument
-object(DOMDocument)#1 (0) {
+object(DOMDocument)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DOMDocument in %s/builtin_extensions.inc on line 8
@@ -111,7 +111,7 @@ array(51) {
 }
 ================
 A_DOMDocument
-object(A_DOMDocument)#2 (1) {
+object(A_DOMDocument)#%d (1) {
   ["___x"]=>
   NULL
 }

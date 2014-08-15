@@ -1,7 +1,7 @@
 SimpleXMLElement
 
 Warning: SimpleXMLElement::__construct() expects at least 1 parameter, 0 given in %s/builtin_extensions.inc on line 5
-object(SimpleXMLElement)#1 (0) {
+object(SimpleXMLElement)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class SimpleXMLElement in %s/builtin_extensions.inc on line 8
@@ -59,7 +59,7 @@ array(23) {
 A_SimpleXMLElement
 
 Warning: SimpleXMLElement::__construct() expects at least 1 parameter, 0 given in %s/builtin_extensions.inc on line 23
-object(A_SimpleXMLElement)#2 (0) {
+object(A_SimpleXMLElement)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class A_SimpleXMLElement in %s/builtin_extensions.inc on line 26

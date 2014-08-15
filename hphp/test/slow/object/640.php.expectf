@@ -1,0 +1,20 @@
+object(stdClass)#%d (0) {
+}
+object(stdClass)#%d (1) {
+  ["scalar"]=>
+  bool(true)
+}
+object(stdClass)#%d (1) {
+  ["scalar"]=>
+  int(10)
+}
+object(stdClass)#%d (1) {
+  ["scalar"]=>
+  string(4) "test"
+}
+object(stdClass)#%d (2) {
+  [0]=>
+  int(10)
+  [1]=>
+  int(20)
+}

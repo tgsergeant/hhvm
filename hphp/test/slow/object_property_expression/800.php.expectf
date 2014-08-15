@@ -1,0 +1,4 @@
+object(X)#%d (1) {
+  ["q"]=>
+  string(5) "hello"
+}

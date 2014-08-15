@@ -6,9 +6,9 @@ array(3) {
   [2]=>
   int(3)
 }
-object(Closure$Foo::genFoo;%s)#3 (0) {
+object(Closure$Foo::genFoo;%s)#%d (0) {
 }
 NULL
-object(Closure$Foo::genFoo;%s)#3 (0) {
+object(Closure$Foo::genFoo;%s)#%d (0) {
 }
 NULL

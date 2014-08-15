@@ -1,0 +1,7 @@
+object(Namespaced\Foo)#%d (0) {
+}
+object(Namespaced\HerpDerp)#%d (0) {
+}
+string(23) "best of all the animals"
+object(namespaced\nested\Ponies)#%d (0) {
+}

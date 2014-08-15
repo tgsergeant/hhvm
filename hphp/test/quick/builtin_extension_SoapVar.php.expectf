@@ -1,7 +1,7 @@
 SoapVar
 
 Warning: SoapVar::__construct() expects at least 2 parameters, 0 given in %s/builtin_extensions.inc on line 5
-object(SoapVar)#1 (0) {
+object(SoapVar)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class SoapVar in %s/builtin_extensions.inc on line 8
@@ -15,7 +15,7 @@ array(1) {
 A_SoapVar
 
 Warning: SoapVar::__construct() expects at least 2 parameters, 0 given in %s/builtin_extensions.inc on line 23
-object(A_SoapVar)#2 (1) {
+object(A_SoapVar)#%d (1) {
   ["___x"]=>
   NULL
 }

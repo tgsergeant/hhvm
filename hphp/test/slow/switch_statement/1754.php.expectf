@@ -11,7 +11,7 @@ int(0)
  goes to: 1string(4) "1abc"
  goes to: 1string(1) "3"
  goes to: defaultstring(3) "foo"
- goes to: 0object(M)#1 (0) {
+ goes to: 0object(M)#%d (0) {
 }
  goes to: 
 Notice: Object of class M could not be converted to int in %s/test/slow/switch_statement/1754.php on line 112

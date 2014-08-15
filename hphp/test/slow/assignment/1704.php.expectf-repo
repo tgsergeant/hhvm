@@ -1,15 +1,15 @@
-object(ClassA)#1 (0) {
+object(ClassA)#%d (0) {
 }
 string(3) "val"
 int(2)
-object(ClassA)#1 (1) {
+object(ClassA)#%d (1) {
   ["val"]=>
   int(2)
 }
 NULL
 int(2)
 int(3)
-object(ClassA)#1 (1) {
+object(ClassA)#%d (1) {
   ["val"]=>
   int(3)
 }

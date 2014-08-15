@@ -579,7 +579,7 @@ array(3) {
   [2]=>
   array(1) {
     ["exception"]=>
-    object(Exception)#1 (7) {
+    object(Exception)#%d (7) {
       ["message":protected]=>
       string(4) "test"
       ["code":protected]=>
@@ -642,7 +642,7 @@ array(3) {
   [2]=>
   array(1) {
     ["return"]=>
-    object(Generator)#2 (0) {
+    object(Generator)#%d (0) {
     }
   }
 }

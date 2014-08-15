@@ -10,7 +10,7 @@ array(3) {
     ["class"]=>
     string(6) "Tracer"
     ["object"]=>
-    object(Tracer)#2 (0) {
+    object(Tracer)#%d (0) {
     }
     ["type"]=>
     string(2) "->"

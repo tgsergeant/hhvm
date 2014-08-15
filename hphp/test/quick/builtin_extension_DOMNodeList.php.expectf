@@ -1,5 +1,5 @@
 DOMNodeList
-object(DOMNodeList)#1 (0) {
+object(DOMNodeList)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DOMNodeList in %s/builtin_extensions.inc on line 8
@@ -21,7 +21,7 @@ array(6) {
 }
 ================
 A_DOMNodeList
-object(A_DOMNodeList)#2 (1) {
+object(A_DOMNodeList)#%d (1) {
   ["___x"]=>
   NULL
 }

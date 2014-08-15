@@ -2,7 +2,7 @@ Warning: Cannot access property on non-object in %s/test/slow/reference/1097.php
 NULL
 array(1) {
   [0]=>
-  object(stdClass)#1 (1) {
+  object(stdClass)#%d (1) {
     ["foo"]=>
     array(1) {
       ["a"]=>
@@ -13,41 +13,41 @@ array(1) {
     }
   }
 }
-object(stdClass)#1 (1) {
+object(stdClass)#%d (1) {
   ["foo"]=>
   array(1) {
     [1]=>
-    object(stdClass)#2 (1) {
+    object(stdClass)#%d (1) {
       ["prop"]=>
       NULL
     }
   }
 }
-object(stdClass)#3 (1) {
+object(stdClass)#%d (1) {
   ["foo"]=>
   array(1) {
     [1]=>
-    object(stdClass)#4 (1) {
+    object(stdClass)#%d (1) {
       ["prop"]=>
       NULL
     }
   }
 }
-object(stdClass)#5 (1) {
+object(stdClass)#%d (1) {
   ["foo"]=>
   array(1) {
     [1]=>
-    object(stdClass)#6 (1) {
+    object(stdClass)#%d (1) {
       ["prop"]=>
       &NULL
     }
   }
 }
-object(stdClass)#7 (1) {
+object(stdClass)#%d (1) {
   ["foo"]=>
   array(1) {
     [1]=>
-    object(stdClass)#8 (1) {
+    object(stdClass)#%d (1) {
       ["prop"]=>
       NULL
     }
