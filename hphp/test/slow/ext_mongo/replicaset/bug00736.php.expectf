@@ -1,7 +1,7 @@
 MongoClient constructed with empty tag set fallback
 array(2) {
   ["_id"]=>
-  object(MongoId)#6 (1) {
+  object(MongoId)#%d (1) {
     ["$id"]=>
     string(24) "%s"
   }
@@ -14,7 +14,7 @@ error message: No candidate servers found
 Secondary read, killing that tag
 array(2) {
   ["_id"]=>
-  object(MongoId)#7 (1) {
+  object(MongoId)#%d (1) {
     ["$id"]=>
     string(24) "%s"
   }

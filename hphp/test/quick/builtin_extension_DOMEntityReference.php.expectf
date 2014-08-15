@@ -1,7 +1,7 @@
 DOMEntityReference
 
 Warning: DOMEntityReference::__construct() expects exactly 1 parameter, 0 given in %s/builtin_extensions.inc on line 5
-object(DOMEntityReference)#1 (0) {
+object(DOMEntityReference)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DOMEntityReference in %s/builtin_extensions.inc on line 8
@@ -55,7 +55,7 @@ array(21) {
 A_DOMEntityReference
 
 Warning: DOMEntityReference::__construct() expects exactly 1 parameter, 0 given in %s/builtin_extensions.inc on line 23
-object(A_DOMEntityReference)#2 (1) {
+object(A_DOMEntityReference)#%d (1) {
   ["___x"]=>
   NULL
 }

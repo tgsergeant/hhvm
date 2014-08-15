@@ -53,7 +53,7 @@ object(bar)#%d (2) {
 references, object, private...
 int(1)
 %unicode|string%(1) "a"
-object(mega_bar)#5 (4) {
+object(mega_bar)#%d (4) {
   [%s]=>
   &int(1)
   [%u|b%"id_ref"]=>

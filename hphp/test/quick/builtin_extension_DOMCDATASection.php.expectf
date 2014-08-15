@@ -1,7 +1,7 @@
 DOMCdataSection
 
 Warning: DOMCdataSection::__construct() expects exactly 1 parameter, 0 given in %s/builtin_extensions.inc on line 5
-object(DOMCdataSection)#1 (0) {
+object(DOMCdataSection)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DOMCdataSection in %s/builtin_extensions.inc on line 8
@@ -69,7 +69,7 @@ array(28) {
 A_DOMCdataSection
 
 Warning: DOMCdataSection::__construct() expects exactly 1 parameter, 0 given in %s/builtin_extensions.inc on line 23
-object(A_DOMCdataSection)#2 (1) {
+object(A_DOMCdataSection)#%d (1) {
   ["___x"]=>
   NULL
 }

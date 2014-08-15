@@ -1,8 +1,8 @@
-object(X)#1 (0) {
+object(X)#%d (0) {
 }
 array(1) {
   [-1]=>
-  object(X)#1 (0) {
+  object(X)#%d (0) {
   }
 }
 string(13) "X::__destruct"

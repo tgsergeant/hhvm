@@ -1,5 +1,5 @@
 DateTime
-object(DateTime)#2 (3) {
+object(DateTime)#%d (3) {
   ["date"]=>
   string(19) "%s"
   ["timezone_type"]=>
@@ -8,7 +8,7 @@ object(DateTime)#2 (3) {
   string(%d) "%s"
 }
 string(70) "O:8:"DateTime":1:{s:10:"_date_time";s:25:"2012-06-23T11:00:00%c%d%d:00";}"
-object(DateTime)#3 (3) {
+object(DateTime)#%d (3) {
   ["date"]=>
   string(19) "%s"
   ["timezone_type"]=>
@@ -58,7 +58,7 @@ array(19) {
 }
 ================
 A_DateTime
-object(A_DateTime)#5 (3) {
+object(A_DateTime)#%d (3) {
   ["date"]=>
   string(19) "%s"
   ["timezone_type"]=>
@@ -67,7 +67,7 @@ object(A_DateTime)#5 (3) {
   string(%d) "%s"
 }
 string(73) "O:10:"A_DateTime":1:{s:10:"_date_time";s:25:"2012-06-23T11:00:00%c%d%d:00";}"
-object(A_DateTime)#6 (3) {
+object(A_DateTime)#%d (3) {
   ["date"]=>
   string(19) "%s"
   ["timezone_type"]=>
@@ -118,7 +118,7 @@ array(20) {
   string(11) "__debugInfo"
 }
 ================
-object(A_DateTime)#5 (3) {
+object(A_DateTime)#%d (3) {
   ["date"]=>
   string(19) "%s"
   ["timezone_type"]=>
@@ -127,7 +127,7 @@ object(A_DateTime)#5 (3) {
   string(%d) "%s"
 }
 string(10) "2012-06-23"
-object(A_DateTime)#6 (3) {
+object(A_DateTime)#%d (3) {
   ["date"]=>
   string(19) "%s"
   ["timezone_type"]=>

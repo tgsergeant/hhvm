@@ -1,0 +1,7 @@
+object(A)#%d (1) {
+  ["v"]=>
+  object(Q)#%d (1) {
+    ["val"]=>
+    int(0)
+  }
+}

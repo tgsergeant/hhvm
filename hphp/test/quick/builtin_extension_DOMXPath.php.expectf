@@ -1,7 +1,7 @@
 DOMXPath
 
 Warning: DOMXPath::__construct() expects exactly 1 parameter, 0 given in %s/builtin_extensions.inc on line 5
-object(DOMXPath)#1 (0) {
+object(DOMXPath)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class DOMXPath in %s/builtin_extensions.inc on line 8
@@ -29,7 +29,7 @@ array(8) {
 A_DOMXPath
 
 Warning: DOMXPath::__construct() expects exactly 1 parameter, 0 given in %s/builtin_extensions.inc on line 23
-object(A_DOMXPath)#2 (1) {
+object(A_DOMXPath)#%d (1) {
   ["___x"]=>
   NULL
 }

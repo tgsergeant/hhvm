@@ -78,7 +78,7 @@ array(5) {
 }
 array(1) {
   ["_id"]=>
-  object(MongoId)#5 (1) {
+  object(MongoId)#%d (1) {
     ["$id"]=>
     string(24) "%s"
   }

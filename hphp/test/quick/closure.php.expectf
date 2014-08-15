@@ -8,7 +8,7 @@ Args: 888 500
 #0  funk(888, 500) called at %s:17]
 #1  {closure}(888) called at %s:28]
 #2  main() called at %s:33]
-object(Closure$%s)#1 (2) {
+object(Closure$%s)#%d (2) {
   ["use_by_val":"Closure$%s":private]=>
   int(123)
   ["use_by_ref":"Closure$%s":private]=>

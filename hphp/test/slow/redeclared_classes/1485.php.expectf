@@ -1,0 +1,6 @@
+object(B)#%d (2) {
+  ["a"]=>
+  int(2)
+  ["a":"A":private]=>
+  int(1)
+}

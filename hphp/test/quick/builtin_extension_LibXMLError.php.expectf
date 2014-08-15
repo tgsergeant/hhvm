@@ -1,5 +1,5 @@
 LibXMLError
-object(LibXMLError)#1 (0) {
+object(LibXMLError)#%d (0) {
 }
 
 Warning: Attempted to serialize unserializable builtin class LibXMLError in %s/builtin_extensions.inc on line 8
@@ -11,7 +11,7 @@ array(1) {
 }
 ================
 A_LibXMLError
-object(A_LibXMLError)#2 (1) {
+object(A_LibXMLError)#%d (1) {
   ["___x"]=>
   NULL
 }

@@ -26,7 +26,7 @@ array(5) {
     ["class"]=>
     string(1) "A"
     ["object"]=>
-    object(A)#1 (0) {
+    object(A)#%d (0) {
     }
     ["type"]=>
     string(2) "->"
@@ -108,7 +108,7 @@ array(5) {
     ["class"]=>
     string(1) "A"
     ["object"]=>
-    object(A)#1 (0) {
+    object(A)#%d (0) {
     }
     ["type"]=>
     string(2) "->"
@@ -181,7 +181,7 @@ array(5) {
     ["class"]=>
     string(1) "A"
     ["object"]=>
-    object(A)#1 (0) {
+    object(A)#%d (0) {
     }
     ["type"]=>
     string(2) "->"
