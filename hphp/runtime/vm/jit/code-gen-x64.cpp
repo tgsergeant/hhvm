@@ -3102,7 +3102,7 @@ Address CodeGenerator::cgCheckStaticBitAndDecRef(Type type,
                                                  F destroy) {
   assert(type.maybeCounted());
 
-  bool hasDestroy = CheckValid<F>::valid(destroy);
+  bool hasDestroy = false; //CheckValid<F>::valid(destroy);
   if (!type.needsStaticBitCheck() &&
       (RuntimeOption::EvalDecRefUsePlainDeclWithDestroy ||
        (RuntimeOption::EvalDecRefUsePlainDecl && !hasDestroy))) {
@@ -3212,12 +3212,12 @@ void CodeGenerator::cgDecRefStaticType(Type type,
     patchStaticCheck = cgCheckStaticBitAndDecRef(
       type, dataReg, [&] (Asm& a) {
         // Emit the call to release in m_astubs
-        cgCallHelper(a,
-                     m_mcg->getDtorCall(type.toDataType()),
-                     kVoidDest,
-                     SyncOptions::kSyncPoint,
-                     argGroup()
-                     .reg(dataReg));
+        //cgCallHelper(a,
+                     //m_mcg->getDtorCall(type.toDataType()),
+                     //kVoidDest,
+                     //SyncOptions::kSyncPoint,
+                     //argGroup()
+                     //.reg(dataReg));
       });
   } else {
     patchStaticCheck = cgCheckStaticBitAndDecRef(type, dataReg);
