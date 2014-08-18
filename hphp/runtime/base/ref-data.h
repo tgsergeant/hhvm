@@ -139,7 +139,7 @@ struct RefData {
 
   bool isReferenced() const {
     assert(m_cow == 0 || (m_cow == 1 && m_count >= 1));
-    return m_count >= 2 && !m_cow;
+    return true;
   }
 
   /**
