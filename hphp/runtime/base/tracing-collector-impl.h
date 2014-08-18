@@ -23,6 +23,7 @@
 #include "hphp/runtime/base/memory-manager.h"
 
 #include <unordered_map>
+#include <unordered_set>
 #include <queue>
 
 
@@ -48,6 +49,8 @@ public:
    * be called when it is collected.
    */
   void markDestructable(const ObjectData *obj);
+
+  void printStack();
 
 private:
   static constexpr size_t alignBits = MemoryManager::kSlabAlignment - 1;
@@ -88,6 +91,8 @@ private:
    * block. Does not mean that the pointer itself is
    * reachable.
    */
+  bool isBlockReachable(void *ptr);
+
   bool isReachable(void *ptr);
 
   //A vector is probably not the best data structure for this,
@@ -99,6 +104,8 @@ private:
   std::vector<SlabData> m_slabs;
 
   std::unordered_map<void *, size_t> slabLookup;
+
+  std::unordered_set<const void *> marked;
 
   std::queue<TypedValue> m_searchQ;
 };

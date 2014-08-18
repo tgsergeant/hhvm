@@ -154,6 +154,15 @@ void MarkSweepCollector::markStackFrame(const ActRec *fp, int offset, const Type
   }
 }
 
+void MarkSweepCollector::printStack() {
+  JIT::VMRegAnchor _;
+  const ActRec* const fp = g_context->getFP();
+  int offset = (fp->m_func->unit() != nullptr)
+               ? fp->unit()->offsetOf(g_context->getPC())
+               : 0;
+  TRACE(1, g_context->getStack().toString(fp, offset));
+}
+
 int64_t MarkSweepCollector::markHeap() {
   const ActRec* const fp = g_context->getFP();
   const TypedValue *const sp = (TypedValue *)g_context->getStack().top();
@@ -172,6 +181,10 @@ int64_t MarkSweepCollector::markHeap() {
   while (!m_searchQ.empty()) {
     cur = m_searchQ.front();
     m_searchQ.pop();
+
+    if(isReachable(cur.m_data.pstr)) {
+      continue;
+    }
 
     if(cur.m_type == DataType::KindOfArray) {
       TRACE(3, "Found array\n");
@@ -256,6 +269,7 @@ void MarkSweepCollector::prepareSlabData() {
 void MarkSweepCollector::cleanData() {
   m_slabs.clear();
   slabLookup.clear();
+  marked.clear();
 }
 
 MarkSweepCollector::SlabData *MarkSweepCollector::getSlabData(void *ptr) {
@@ -268,6 +282,7 @@ MarkSweepCollector::SlabData *MarkSweepCollector::getSlabData(void *ptr) {
 }
 
 void MarkSweepCollector::markReachable(void *ptr) {
+  marked.insert(ptr);
   MarkSweepCollector::SlabData *sd = getSlabData(ptr);
   if(sd) {
     size_t blockId = MemoryManager::getBlockId(sd->slab, ptr);
@@ -277,13 +292,17 @@ void MarkSweepCollector::markReachable(void *ptr) {
   }
 }
 
-bool MarkSweepCollector::isReachable(void *ptr) {
+bool MarkSweepCollector::isBlockReachable(void *ptr) {
   MarkSweepCollector::SlabData *sd = getSlabData(ptr);
   if(sd) {
     size_t blockId = MemoryManager::getBlockId(sd->slab, ptr);
     return sd->usedBlocks[blockId];
   }
   return false;
+}
+
+bool MarkSweepCollector::isReachable(void *ptr) {
+  return (marked.find(ptr) != marked.end());
 }
 
 void MarkSweepCollector::markDestructable(ObjectData const *obj) {

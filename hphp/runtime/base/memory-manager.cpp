@@ -688,7 +688,7 @@ void *MemoryManager::blockMalloc(size_t nbytes) {
   uintptr_t ptr = (uintptr_t(m_currentBlock.head) + kAlignMask) & ~kAlignMask;
 
   m_currentBlock.head = (char *)(ptr + size);
-  FTRACE(2, "allocated {} bytes from current block\n", nbytes);
+  FTRACE(3, "allocated {} bytes from current block\n", nbytes);
   return debugPostAllocate((void *)ptr, nbytes, nbytes);
 }
 
