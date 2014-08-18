@@ -196,7 +196,7 @@ struct StringData {
   /*
    * Reference-counting related.
    */
-  IMPLEMENT_COUNTABLE_METHODS_NO_STATIC
+  IMPLEMENT_BLANK_COUNTABLE_METHODS_NO_STATIC
   void setRefCount(RefCount n);
   bool isStatic() const;
   bool isUncounted() const;

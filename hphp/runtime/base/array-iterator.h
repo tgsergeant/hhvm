@@ -471,7 +471,6 @@ struct MArrayIter {
   Variant& val() {
     ArrayData* data = getArray();
     assert(data && data == getContainer());
-    assert(!data->hasMultipleRefs() || data->noCopyOnWrite());
     assert(!getResetFlag());
     assert(data->validMArrayIter(*this));
     // Normally it's not ok to modify the return value of getValueRef,

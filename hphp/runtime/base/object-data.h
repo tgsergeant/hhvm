@@ -118,7 +118,7 @@ class ObjectData {
   bool isStatic() const { return false; }
   void setUncounted() const { assert(false); }
   bool isUncounted() const { return false; }
-  IMPLEMENT_COUNTABLENF_METHODS_NO_STATIC
+  IMPLEMENT_BLANK_COUNTABLE_METHODS_NO_STATIC
 
   ~ObjectData();
  public:
@@ -189,7 +189,6 @@ class ObjectData {
   static void DeleteObject(ObjectData* p);
 
   void release() {
-    assert(!hasMultipleRefs());
     if (LIKELY(destruct())) DeleteObject(this);
   }
 
@@ -469,7 +468,6 @@ CountableHelper::~CountableHelper() {
 ///////////////////////////////////////////////////////////////////////////////
 
 ALWAYS_INLINE void decRefObj(ObjectData* obj) {
-  obj->decRefAndRelease();
 }
 
 inline ObjectData* instanceFromTv(TypedValue* tv) {

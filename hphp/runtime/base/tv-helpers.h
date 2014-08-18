@@ -140,7 +140,7 @@ inline void tvRefcountedDecRef(TypedValue v) {
 // Assumes the value is live, and has a count of at least 2 coming in.
 inline void tvRefcountedDecRefHelperNZ(DataType type, uint64_t datum) {
   if (IS_REFCOUNTED_TYPE(type)) {
-    auto* asStr = reinterpret_cast<StringData*>(datum);
+    auto* asStr = reinterpret_cast<RefData*>(datum);
     auto const DEBUG_ONLY newCount = asStr->decRefCount();
     assert(newCount != 0);
   }
@@ -167,7 +167,7 @@ ALWAYS_INLINE void tvRefcountedDecRef(TypedValue* tv) {
 ALWAYS_INLINE void tvDecRefOnly(TypedValue* tv) {
   assert(!tvDecRefWillCallHelper(tv));
   if (IS_REFCOUNTED_TYPE(tv->m_type)) {
-    tv->m_data.pstr->decRefCount();
+    tv->m_data.pref->decRefCount();
   }
 }
 
@@ -185,7 +185,7 @@ inline TypedValue* tvBox(TypedValue* tv) {
 inline void tvIncRef(const TypedValue* tv) {
   assert(tvIsPlausible(*tv));
   assert(IS_REFCOUNTED_TYPE(tv->m_type));
-  tv->m_data.pstr->incRefCount();
+  tv->m_data.pref->incRefCount();
 }
 
 ALWAYS_INLINE void tvRefcountedIncRef(const TypedValue* tv) {
@@ -200,7 +200,7 @@ ALWAYS_INLINE void tvRefcountedIncRef(const TypedValue* tv) {
 // Assumes 'tv' is not shared (ie KindOfRef or KindOfObject)
 inline void tvIncRefNotShared(TypedValue* tv) {
   assert(tv->m_type == KindOfObject || tv->m_type == KindOfRef);
-  tv->m_data.pobj->incRefCount();
+  tv->m_data.pref->incRefCount();
 }
 
 // Assumes 'tv' is live
@@ -292,7 +292,6 @@ inline void tvWriteUninit(TypedValue* tv) {
 inline void tvWriteObject(ObjectData* pobj, TypedValue* tv) {
   tv->m_type = KindOfObject;
   tv->m_data.pobj = pobj;
-  tvIncRef(tv);
 }
 
 // conditionally unbox tv
@@ -506,7 +505,6 @@ void tvDupFlattenImpl(const TypedValue* fr, TypedValue* to, Fun shouldFlatten) {
   auto type = fr->m_type;
   if (!IS_REFCOUNTED_TYPE(type)) return;
   if (type != KindOfRef) {
-    tvIncRef(to);
     return;
   }
   auto ref = fr->m_data.pref;

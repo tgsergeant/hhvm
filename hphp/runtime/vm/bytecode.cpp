@@ -6715,7 +6715,6 @@ OPTBLD_INLINE void ExecutionContext::iopInitThisLoc(IOP_ARGS) {
   if (m_fp->hasThis()) {
     thisLoc->m_data.pobj = m_fp->getThis();
     thisLoc->m_type = KindOfObject;
-    tvIncRef(thisLoc);
   } else {
     tvWriteUninit(thisLoc);
   }

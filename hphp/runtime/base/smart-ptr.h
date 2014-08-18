@@ -37,9 +37,8 @@ template<typename T>
 class SmartPtr {
 public:
   SmartPtr() : m_px(nullptr) {}
-  explicit SmartPtr(T* px) : m_px(px) { if (m_px) m_px->incRefCount(); }
+  explicit SmartPtr(T* px) : m_px(px) {  }
   SmartPtr(const SmartPtr<T>& src) : m_px(src.get()) {
-    if (m_px) m_px->incRefCount();
   }
 
   enum class NoIncRef {};
@@ -48,7 +47,6 @@ public:
   enum class NonNull { Tag };
   explicit SmartPtr(T* px, NonNull) : m_px(px) {
     assert(px);
-    m_px->incRefCount();
   }
 
   // Move ctor
@@ -58,7 +56,6 @@ public:
 
   template<class Y>
   SmartPtr(const SmartPtr<Y>& src) : m_px(src.get()) {
-    if (m_px) m_px->incRefCount();
   }
   // Move ctor for derived types
   template<class Y>
@@ -99,12 +96,7 @@ public:
     return *this;
   }
   SmartPtr& operator=(T* px) {
-    // Works with self-assignment because incRefCount is
-    // called before decRefCount.
-    if (px) px->incRefCount();
-    auto goner = m_px;
     m_px = px;
-    decRefPtr(goner);
     return *this;
   }
 
@@ -142,7 +134,6 @@ protected:
 
 private:
   static ALWAYS_INLINE void decRefPtr(T* ptr) {
-    if (ptr) ptr->decRefAndRelease();
   }
   static void compileTimeAssertions() {
     static_assert(offsetof(SmartPtr, m_px) == kExpectedMPxOffset, "");

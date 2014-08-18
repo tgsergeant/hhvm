@@ -210,6 +210,50 @@ inline void assert_refcount_realistic_ns_nz(int32_t count) {
     return false;                                       \
   }
 
+#define IMPLEMENT_BLANK_COUNTABLE_METHODS_NO_STATIC       \
+  RefCount getCount() const {                                           \
+    return 0;                                                     \
+  }                                                                     \
+                                                                        \
+  bool isRefCounted() const {                                           \
+    return false;                                                \
+  }                                                                     \
+                                                                        \
+  bool hasMultipleRefs() const {                                        \
+    return true;                                       \
+  }                                                                     \
+                                                                        \
+  bool hasExactlyOneRef() const {                                       \
+    return false;                                      \
+  }                                                                     \
+                                                                        \
+  void incRefCount() const {                                            \
+  }                                                                     \
+                                                                        \
+  RefCount decRefCount() const {                                        \
+    return 0;                                                            \
+  }                                                                     \
+                                                                        \
+  ALWAYS_INLINE void decRefAndRelease() {                               \
+  }
+
+#define IMPLEMENT_BLANK_COUNTABLE_METHODS       \
+  void setStatic() const {                      \
+    assert_refcount_realistic(m_count);         \
+    m_count = StaticValue;                      \
+  }                                             \
+  bool isStatic() const {                       \
+    return m_count == StaticValue;              \
+  }                                             \
+  void setUncounted() const {                   \
+    assert_refcount_realistic(m_count);         \
+    m_count = UncountedValue;                   \
+  }                                             \
+  bool isUncounted() const {                    \
+    return m_count == UncountedValue;           \
+  }                                             \
+  IMPLEMENT_BLANK_COUNTABLE_METHODS_NO_STATIC
+
 class ObjectData;
 
 /* We only use this to hold objects */

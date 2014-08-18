@@ -51,14 +51,13 @@ class ResourceData {
   bool isStatic() const { return false; }
   void setUncounted() const { assert(false); }
   bool isUncounted() const { return false; }
-  IMPLEMENT_COUNTABLENF_METHODS_NO_STATIC
+  IMPLEMENT_BLANK_COUNTABLE_METHODS_NO_STATIC
 
   virtual ~ResourceData(); // all PHP resources need vtables
 
   void operator delete(void* p) { ::operator delete(p); }
 
   void release() {
-    assert(!hasMultipleRefs());
     delete this;
   }
 
@@ -184,7 +183,7 @@ protected:
 ///////////////////////////////////////////////////////////////////////////////
 
 ALWAYS_INLINE bool decRefRes(ResourceData* res) {
-  return res->decRefAndRelease();
+  return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -113,7 +113,6 @@ struct Variant : private TypedValue {
   explicit Variant(ArrayData* ad, ArrayInitCtor) {
     m_type = KindOfArray;
     m_data.parr = ad;
-    ad->incRefCount();
   }
 
   // for static strings only
@@ -153,7 +152,7 @@ struct Variant : private TypedValue {
     m_type = v.m_type;
     m_data = v.m_data;
     if (IS_REFCOUNTED_TYPE(m_type)) {
-      m_data.pstr->incRefCount();
+      m_data.pref->incRefCount();
     }
   }
 
@@ -831,7 +830,7 @@ struct Variant : private TypedValue {
     } else {
       const Value odata = other->m_data;
       if (IS_REFCOUNTED_TYPE(otype)) {
-        odata.pstr->incRefCount();
+        odata.pref->incRefCount();
       }
       self->m_data = odata;
       self->m_type = otype;
@@ -881,7 +880,7 @@ public:
       UNLIKELY(v.m_type == KindOfRef) ? v.m_data.pref->var() : &v;
     assert(this != other);
     if (IS_REFCOUNTED_TYPE(other->m_type)) {
-      other->m_data.pstr->incRefCount();
+      other->m_data.pref->incRefCount();
     }
     m_type = other->m_type != KindOfUninit ? other->m_type : KindOfNull;
     m_data = other->m_data;
@@ -894,7 +893,7 @@ public:
     m_type = v.m_data.pref->tv()->m_type; // Can't be KindOfUninit.
     m_data = v.m_data.pref->tv()->m_data;
     if (IS_REFCOUNTED_TYPE(m_type)) {
-      m_data.pstr->incRefCount();
+      m_data.pref->incRefCount();
     }
     decRefRef(v.m_data.pref);
     v.m_type = KindOfNull;
@@ -910,8 +909,8 @@ public:
       v.m_type == KindOfRef && !v.m_data.pref->isReferenced()
         ? *v.m_data.pref->var() : v;
     if (IS_REFCOUNTED_TYPE(rhs.m_type)) {
-      assert(rhs.m_data.pstr);
-      rhs.m_data.pstr->incRefCount();
+      assert(rhs.m_data.pref);
+      rhs.m_data.pref->incRefCount();
     }
 
     auto const d = m_data.num;

@@ -161,7 +161,6 @@ inline bool StringData::isZero() const  {
 
 inline StringData* StringData::modifyChar(int offset, char c) {
   assert(offset >= 0 && offset < size());
-  assert(!hasMultipleRefs());
 
   auto const sd = isShared() ? escalate(size()) : this;
   sd->m_data[offset] = c;
@@ -212,7 +211,6 @@ inline bool StringData::isImmutable() const {
 //////////////////////////////////////////////////////////////////////
 
 ALWAYS_INLINE void decRefStr(StringData* s) {
-  s->decRefAndRelease();
 }
 
 struct string_data_hash {

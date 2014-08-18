@@ -73,7 +73,7 @@ protected:
   ~ArrayData();
 
 public:
-  IMPLEMENT_COUNTABLE_METHODS
+  IMPLEMENT_BLANK_COUNTABLE_METHODS
   void setRefCount(RefCount n) { m_count = n; }
 
   /**
@@ -519,7 +519,6 @@ extern const ArrayFunctions g_array_funcs;
 
 ALWAYS_INLINE
 void decRefArr(ArrayData* arr) {
-  arr->decRefAndRelease();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
