@@ -2979,8 +2979,9 @@ void CodeGenerator::cgIncRefWork(Type type, SSATmp* src, PhysLoc srcLoc) {
   };
 
   if (type.isKnownDataType()) {
-    assert(IS_REFCOUNTED_TYPE(type.toDataType()));
-    increfMaybeStatic();
+    if(IS_REFCOUNTED_TYPE(type.toDataType())) {
+      increfMaybeStatic();
+    }
   } else {
     emitCmpTVType(m_as, KindOfRefCountThreshold, srcLoc.reg(1));
     ifThen(m_as, CC_NLE, [&] { increfMaybeStatic(); });

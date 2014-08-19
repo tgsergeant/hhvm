@@ -51,11 +51,9 @@ bool cellIsPlausible(const Cell cell) {
     break;
   case KindOfString:
     assertPtr(cell.m_data.pstr);
-    assert_refcount_realistic(cell.m_data.pstr->getCount());
     break;
   case KindOfArray:
     assertPtr(cell.m_data.parr);
-    assert_refcount_realistic(cell.m_data.parr->getCount());
     break;
   case KindOfObject:
     assertPtr(cell.m_data.pobj);

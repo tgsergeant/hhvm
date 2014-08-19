@@ -653,13 +653,11 @@ static std::string toStringElm(const TypedValue* tv) {
     }
     break;
   case KindOfArray:
-    assert_refcount_realistic_nz(tv->m_data.parr->getCount());
     os << tv->m_data.parr;
     print_count();
     os << ":Array";
     break;
   case KindOfObject:
-    assert_refcount_realistic_nz(tv->m_data.pobj->getCount());
     os << tv->m_data.pobj;
     print_count();
     os << ":Object("
@@ -667,7 +665,6 @@ static std::string toStringElm(const TypedValue* tv) {
        << ")";
     break;
   case KindOfResource:
-    assert_refcount_realistic_nz(tv->m_data.pres->getCount());
     os << tv->m_data.pres;
     print_count();
     os << ":Resource("
@@ -1320,7 +1317,6 @@ void ExecutionContext::shuffleExtraStackArgs(ActRec* ar) {
       // ... and now remove them from the stack
       m_stack.ndiscard(numVarArgs);
       auto const ad = varArgsArray.detach();
-      assert(ad->hasExactlyOneRef());
       m_stack.pushArrayNoRc(ad);
       // Before, for each arg: refcount = n + 1 (stack)
       // After, for each arg: refcount = n + 2 (ExtraArgs, varArgsArray)
@@ -1339,7 +1335,6 @@ void ExecutionContext::shuffleExtraStackArgs(ActRec* ar) {
     // variadic args array so we don't need to decref the values.
     m_stack.ndiscard(numVarArgs);
     auto const ad = varArgsArray.detach();
-    assert(ad->hasExactlyOneRef());
     m_stack.pushArrayNoRc(ad);
     assert(func->numParams() == (numArgs - numVarArgs + 1));
     ar->setNumArgs(func->numParams());
@@ -1535,7 +1530,6 @@ static bool prepareArrayArgs(ActRec* ar, const Cell& args,
     if (hasVarParam) {
       auto const ad = ai.create();
       stack.pushArray(ad);
-      assert(ad->hasExactlyOneRef());
     }
     ar->initNumArgs(nargs);
     ar->setExtraArgs(extraArgs);
@@ -1554,7 +1548,6 @@ static bool prepareArrayArgs(ActRec* ar, const Cell& args,
       assert(!iter); // iter should now be exhausted
       auto const ad = ai.create();
       stack.pushArray(ad);
-      assert(ad->hasExactlyOneRef());
     }
     ar->initNumArgs(f->numParams());
   }
@@ -3878,7 +3871,6 @@ OPTBLD_INLINE void ExecutionContext::iopConcat(IOP_ARGS) {
     cellAsVariant(*c2) = concat(cellAsVariant(*c2).toString(),
                                 cellAsCVarRef(*c1).toString());
   }
-  assert_refcount_realistic_nz(c2->m_data.pstr->getCount());
   m_stack.popC();
 }
 

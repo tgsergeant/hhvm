@@ -358,7 +358,6 @@ ArrayData* MixedArray::MakeUncountedPacked(ArrayData* array) {
 
 NEVER_INLINE
 void MixedArray::Release(ArrayData* in) {
-  assert(in->isRefCounted());
   auto const ad = asMixed(in);
 
   if (!ad->isZombie()) {
@@ -383,7 +382,6 @@ void MixedArray::Release(ArrayData* in) {
 
 static void release_unk_tv(TypedValue& tv) {
   if (tv.m_type == KindOfString) {
-    assert(!tv.m_data.pstr->isRefCounted());
     if (!tv.m_data.pstr->isStatic()) {
       tv.m_data.pstr->destructStatic();
     }
@@ -391,7 +389,6 @@ static void release_unk_tv(TypedValue& tv) {
   }
 
   if (tv.m_type == KindOfArray) {
-    assert(!tv.m_data.parr->isRefCounted());
     if (!tv.m_data.parr->isStatic()) {
       if (tv.m_data.parr->isPacked()) {
         MixedArray::ReleaseUncountedPacked(tv.m_data.parr);
@@ -417,7 +414,6 @@ void MixedArray::ReleaseUncounted(ArrayData* in) {
     for (auto ptr = data; ptr != stop; ++ptr) {
       if (isTombstone(ptr->data.m_type)) continue;
       if (ptr->hasStrKey()) {
-        assert(!ptr->key->isRefCounted());
         if (!ptr->key->isStatic()) {
           ptr->key->destructStatic();
         }

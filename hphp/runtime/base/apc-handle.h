@@ -134,13 +134,13 @@ struct APCHandle {
   // delayed release.
   //
   void reference() {
-    if (!getUncounted()) {
+    if (isRefCountedHandle()) {
       realIncRef();
     }
   }
 
   void unreference() {
-    if (!getUncounted()) {
+    if (isRefCountedHandle()) {
       realDecRef();
     }
   }

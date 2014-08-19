@@ -112,14 +112,12 @@ inline MutableSlice StringData::bufferSlice() {
 
 inline void StringData::invalidateHash() {
   assert(!isImmutable());
-  assert(!hasMultipleRefs());
   m_hash = 0;
   assert(checkSane());
 }
 
 inline void StringData::setSize(int len) {
   assert(len >= 0 && len < capacity() && !isImmutable());
-  assert(!hasMultipleRefs());
   m_data[len] = 0;
   m_len = len;
   m_hash = 0;

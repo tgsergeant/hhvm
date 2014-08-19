@@ -282,8 +282,6 @@ StringData* StringData::Make(int reserveLen) {
 }
 
 StringData* StringData::append(StringSlice range) {
-  assert(!hasMultipleRefs());
-
   auto s = range.ptr;
   auto const len = range.len;
 
@@ -324,7 +322,7 @@ StringData* StringData::append(StringSlice range) {
 }
 
 StringData* StringData::reserve(int cap) {
-  assert(!isImmutable() && !hasMultipleRefs() && cap >= 0);
+  assert(!isImmutable() && cap >= 0);
   assert(isFlat());
 
   if (cap + 1 <= capacity()) return this;

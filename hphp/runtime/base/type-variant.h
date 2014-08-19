@@ -1076,16 +1076,12 @@ private:
     assert(varNrFlag() == NR_FLAG);
     switch (m_type) {
     case KindOfArray:
-      assert_refcount_realistic(m_data.parr->getCount());
       return;
     case KindOfString:
-      assert_refcount_realistic(m_data.pstr->getCount());
       return;
     case KindOfObject:
-      assert_refcount_realistic(m_data.pobj->getCount());
       return;
     case KindOfResource:
-      assert_refcount_realistic(m_data.pres->getCount());
       return;
     default:
       break;

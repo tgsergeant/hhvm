@@ -1005,7 +1005,6 @@ void shuffleExtraArgsMayUseVV(ActRec* ar) {
   assert(f->attrs() & AttrMayUseVV);
 
   {
-    assert(!ar->hasExtraArgs());
     ar->setExtraArgs(ExtraArgs::allocateCopy(tvArgs, numExtra));
   }
 }
@@ -1021,7 +1020,6 @@ void shuffleExtraArgsVariadic(ActRec* ar) {
     auto tv = reinterpret_cast<TypedValue*>(ar) - numParams - 1;
     tv->m_type = KindOfArray;
     tv->m_data.parr = varArgsArray.detach();
-    assert(tv->m_data.parr->hasExactlyOneRef());
 
     // no incref is needed, since extra values are being transferred
     // from the stack to the last local

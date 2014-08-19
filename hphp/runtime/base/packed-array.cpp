@@ -384,7 +384,6 @@ ArrayData* MixedArray::MakeReserve(uint32_t capacity) {
 NEVER_INLINE
 void PackedArray::Release(ArrayData* ad) {
   assert(checkInvariants(ad));
-  assert(ad->isRefCounted());
 
   auto const size = ad->m_size;
   auto const data = packedData(ad);
@@ -677,7 +676,6 @@ ArrayData* PackedArray::PlusEq(ArrayData* adIn, const ArrayData* elems) {
     auto const ret = MixedArray::ArrayPlusEqShouldCopy(mixed, elems, false);
 
     assert(ret == mixed);
-    assert(!mixed->hasMultipleRefs());
     return ret;
   } catch (...) {
     MixedArray::Release(mixed);
