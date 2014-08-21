@@ -181,8 +181,10 @@ void emitIncRef(Asm& as, PhysReg base) {
 
 void emitIncRefCheckNonStatic(Asm& as, PhysReg base, DataType dtype) {
   { // if !static then
-    IfCountNotStatic ins(as, base, dtype);
-    emitIncRef(as, base);
+    if (IS_REFCOUNTED_TYPE(dtype)) {
+      IfCountNotStatic ins(as, base, dtype);
+      emitIncRef(as, base);
+    }
   } // endif
 }
 

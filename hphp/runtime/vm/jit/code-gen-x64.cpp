@@ -3016,31 +3016,6 @@ void CodeGenerator::cgDecRefStack(IRInstruction* inst) {
 }
 
 void CodeGenerator::cgDecRefThis(IRInstruction* inst) {
-  auto fpReg = srcLoc(0).reg();
-  auto scratchReg = m_rScratch;
-
-  // Load AR->m_this into m_rScratch
-  m_as.loadq(fpReg[AROFF(m_this)], scratchReg);
-
-  auto decrefIfAvailable = [&] {
-    // Check if this is available and we're not in a static context instead
-    m_as.testb(1, rbyte(scratchReg));
-    ifThen(m_as, CC_Z, [&] {
-      cgDecRefStaticType(
-        Type::Obj,
-        scratchReg,
-        true /* genZeroCheck */
-      );
-    });
-  };
-
-  if (curFunc()->isPseudoMain()) {
-    // In pseudo-mains, emit check for presence of m_this
-    m_as.testq(scratchReg, scratchReg);
-    ifThen(m_as, CC_NZ, [&] { decrefIfAvailable(); });
-  } else {
-    decrefIfAvailable();
-  }
 }
 
 void CodeGenerator::cgDecRefLoc(IRInstruction* inst) {
@@ -3102,6 +3077,13 @@ Address CodeGenerator::cgCheckStaticBitAndDecRef(Type type,
                                                  PhysReg dataReg,
                                                  F destroy) {
   assert(type.maybeCounted());
+
+  //Keep an eye on this, I'm not certain it's working as intended
+  if (type.isKnownDataType()) {
+    if(!IS_REFCOUNTED_TYPE(type.toDataType())) {
+      return nullptr;
+    }
+  }
 
   bool hasDestroy = CheckValid<F>::valid(destroy);
   if (!type.needsStaticBitCheck() &&
@@ -3204,6 +3186,7 @@ void CodeGenerator::cgDecRefStaticType(Type type,
   assert(type.isKnownDataType());
 
   if (type.notCounted()) return;
+  if (!IS_REFCOUNTED_TYPE(type.toDataType())) return;
 
   // Check for UncountedValue or StaticValue if needed,
   // do the actual DecRef, and leave flags set based on the subtract result,
