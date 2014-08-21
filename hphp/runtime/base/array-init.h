@@ -63,8 +63,6 @@ struct ArrayInit {
   ArrayInit& operator=(const ArrayInit&) = delete;
 
   ~ArrayInit() {
-    // In case an exception interrupts the initialization.
-    if (m_data) m_data->release();
   }
 
   ArrayInit& set(const Variant& v) {
@@ -287,8 +285,6 @@ public:
   PackedArrayInit& operator=(const PackedArrayInit&) = delete;
 
   ~PackedArrayInit() {
-    // In case an exception interrupts the initialization.
-    if (m_vec) m_vec->release();
   }
 
   /*

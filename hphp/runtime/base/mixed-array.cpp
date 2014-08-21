@@ -255,7 +255,6 @@ MixedArray* MixedArray::copyMixedAndResizeIfNeededSlow() const {
   // GrowPacked happens.
   auto const copy = copyMixed();
   auto const ret = copy->resize();
-  if (copy != ret) Release(copy);
   return ret;
 }
 

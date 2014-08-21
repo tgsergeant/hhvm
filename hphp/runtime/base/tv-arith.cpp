@@ -403,8 +403,6 @@ struct IncBase {
       auto const tmp = StringData::Make(sd, CopyString);
       auto const tmp2 = tmp->increment();
       if (tmp2 != tmp) {
-        assert(tmp->getCount() == 0);
-        tmp->release();
         return tmp2;
       }
       return tmp;

@@ -1108,7 +1108,6 @@ static inline void iter_key_cell_local_impl(Iter* iter, TypedValue* out) {
 static NEVER_INLINE
 int64_t iter_next_free_packed(Iter* iter, ArrayData* arr) {
   assert(arr->isPacked());
-  PackedArray::Release(arr);
   if (debug) {
     iter->arr().setIterType(ArrayIter::TypeUndefined);
   }
@@ -1118,7 +1117,6 @@ int64_t iter_next_free_packed(Iter* iter, ArrayData* arr) {
 static NEVER_INLINE
 int64_t iter_next_free_mixed(Iter* iter, ArrayData* arr) {
   assert(arr->isMixed());
-  MixedArray::Release(arr);
   if (debug) {
     iter->arr().setIterType(ArrayIter::TypeUndefined);
   }
@@ -1127,7 +1125,6 @@ int64_t iter_next_free_mixed(Iter* iter, ArrayData* arr) {
 
 NEVER_INLINE
 static int64_t iter_next_free_apc(Iter* iter, APCLocalArray* arr) {
-  APCLocalArray::Release(arr->asArrayData());
   if (debug) {
     iter->arr().setIterType(ArrayIter::TypeUndefined);
   }

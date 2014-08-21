@@ -44,10 +44,6 @@ StringBuffer::StringBuffer(int initialSize /* = SmallStringReserve */)
 }
 
 StringBuffer::~StringBuffer() {
-  if (m_str) {
-    assert((m_str->setSize(0), true)); // appease StringData::checkSane()
-    m_str->release();
-  }
 }
 
 const char *StringBuffer::data() const {
@@ -108,11 +104,6 @@ void StringBuffer::clear() {
 }
 
 void StringBuffer::release() {
-  if (m_str) {
-    assert(m_str->getCount() == 0);
-    m_buffer[m_len] = 0; // appease StringData::checkSane()
-    m_str->release();
-  }
   m_str = 0;
   m_buffer = 0;
   m_len = m_cap = 0;
@@ -133,8 +124,6 @@ char* StringBuffer::appendCursor(int size) {
     m_str->setSize(m_len);
     auto const tmp = m_str->reserve(m_len + size);
     if (UNLIKELY(tmp != m_str)) {
-      assert(m_str->getCount() == 0);
-      m_str->release();
       m_str = tmp;
     }
     auto const s = m_str->bufferSlice();
@@ -306,7 +295,6 @@ void StringBuffer::growBy(int spaceRequired) {
   auto const tmp = m_str->reserve(new_size);
   if (UNLIKELY(tmp != m_str)) {
     assert(m_str->getCount() == 0);
-    m_str->release();
     m_str = tmp;
   }
   auto const s = m_str->bufferSlice();

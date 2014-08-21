@@ -244,7 +244,6 @@ ArrayData* PackedArray::CopyAndResizeIfNeededSlow(const ArrayData* adIn) {
   auto const ret  = PackedArray::Grow(copy);
   assert(ret != copy);
   assert(copy->getCount() == 0);
-  PackedArray::Release(copy);
   return ret;
 }
 
@@ -678,7 +677,6 @@ ArrayData* PackedArray::PlusEq(ArrayData* adIn, const ArrayData* elems) {
     assert(ret == mixed);
     return ret;
   } catch (...) {
-    MixedArray::Release(mixed);
     throw;
   }
 }
