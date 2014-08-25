@@ -772,10 +772,10 @@ void MemoryManager::recycleMemory(Slab slab, std::bitset<kBlocksPerSlab> blocksT
       b.end = (void *)(blockptr + kBlockSize);
       m_availableBlocks.push(b);
 
-      FTRACE(2, "returned block {} to allocator\n", b.head);
+      FTRACE(2, "returned block {} ({}) to allocator\n", b.head, i);
 
-      blockptr += kBlockSize;
     }
+    blockptr += kBlockSize;
   }
 
   FTRACE(1, "{} blocks available to be allocated\n", m_availableBlocks.size());
