@@ -21,10 +21,9 @@
 #include "hphp/util/thread-local.h"
 #include "hphp/runtime/base/base-includes.h"
 #include "hphp/runtime/base/memory-manager.h"
+#include "hphp/runtime/base/heap-tracer.h"
 
 #include <unordered_map>
-#include <unordered_set>
-#include <queue>
 
 
 namespace HPHP {
@@ -60,10 +59,6 @@ private:
     std::bitset<MemoryManager::kBlocksPerSlab> usedBlocks;
   };
 
-  int64_t markHeap();
-
-  void markStackFrame(const ActRec *fp, int offset, const TypedValue *ftop);
-
   /*
    * Grab the data about current slabs from the memory
    * manager and process it into something useful
@@ -93,8 +88,6 @@ private:
    */
   bool isBlockReachable(void *ptr);
 
-  bool isReachable(void *ptr);
-
   //A vector is probably not the best data structure for this,
   //depending on the size of the data.
   //Something that is segregated based on memory block will be
@@ -105,9 +98,7 @@ private:
 
   std::unordered_map<void *, size_t> slabLookup;
 
-  std::unordered_set<const void *> marked;
-
-  std::queue<TypedValue> m_searchQ;
+  HeapTracer tracer;
 };
 
 MarkSweepCollector &gc();
