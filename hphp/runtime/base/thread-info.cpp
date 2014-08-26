@@ -31,6 +31,7 @@
 #include "hphp/runtime/base/ini-setting.h"
 #include "hphp/runtime/base/rds.h"
 #include "hphp/runtime/base/tracing-collector.h"
+#include "hphp/runtime/base/heap-stats.h"
 #include "hphp/runtime/ext/ext_string.h"
 #include "hphp/util/lock.h"
 #include "hphp/util/alloc.h"

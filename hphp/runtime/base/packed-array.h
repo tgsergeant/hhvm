@@ -122,6 +122,8 @@ struct PackedArray {
    */
   static ArrayData* NonSmartConvert(const ArrayData*);
 
+  static size_t PackedSize(const ArrayData* ad);
+
 private:
   static ArrayData* Grow(ArrayData*);
   static MixedArray* ToMixedHeader(const ArrayData*, size_t);

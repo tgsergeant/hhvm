@@ -90,6 +90,7 @@
 #include "hphp/runtime/base/memory-profile.h"
 #include "hphp/runtime/base/runtime-error.h"
 #include "hphp/runtime/base/container-functions.h"
+#include "hphp/runtime/base/heap-stats.h"
 
 #include "hphp/system/systemlib.h"
 #include "hphp/runtime/ext/ext_collections.h"
@@ -7676,6 +7677,8 @@ void ExecutionContext::requestExit() {
   profileRequestEnd();
   EventHook::Disable();
   EnvConstants::requestExit();
+
+  heap_stats_request_end();
 
   if (m_globalVarEnv) {
     smart_delete(m_globalVarEnv);
