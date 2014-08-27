@@ -37,7 +37,7 @@ void HeapStats::trace_heap_stats() {
           entry.bytes[index] += sizeof(StringData) + n.current.m_data.pstr->capacity();
         }
         else if (n.current.m_type == KindOfObject) {
-          entry.bytes[index] 
+          entry.bytes[index]
             += ObjectData::sizeForNProps(n.current.m_data.pobj->getVMClass()->numDeclProperties());
         }
         else if (n.current.m_type == KindOfRef) {
@@ -63,7 +63,7 @@ void HeapStats::trace_heap_stats() {
 }
 
 void HeapStats::request_end() {
-  TRACE(2, "Number of objects\n");
+  TRACE(2, "\n\nNumber of objects\n");
   TRACE(2, "String,Array,Object,Resource,Ref\n");
   for (auto entry : logs) {
     FTRACE(2, "{},{},{},{},{}\n", entry.counts[6],
@@ -71,10 +71,22 @@ void HeapStats::request_end() {
   }
 
   TRACE(2, "\nLive bytes\n");
+  TRACE(2, "String header,String data,Array header,Array data,Object header,Object data\n");
   for (auto entry : logs) {
-    FTRACE(2, "{},{},{},{},{}\n", entry.bytes[6],
-        entry.bytes[7], entry.bytes[8], entry.bytes[9], entry.bytes[10]);
+    auto str_header = entry.counts[6] * sizeof(StringData);
+    auto arr_header = entry.counts[7] * sizeof(ArrayData);
+    auto obj_header = entry.counts[8] * sizeof(ObjectData);
+    FTRACE(2, "{},{},{},{},{},{}\n",
+        str_header,
+        entry.bytes[6] - str_header,
+        arr_header,
+        entry.bytes[7] - arr_header,
+        obj_header,
+        entry.bytes[8] - obj_header
+        );
+
   }
+  logs.clear();
 }
 
 }
