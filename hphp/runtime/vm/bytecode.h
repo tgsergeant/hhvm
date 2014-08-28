@@ -187,6 +187,9 @@ class VarEnv {
 
   // Access to wrapped ExtraArgs, if we have one.
   TypedValue* getExtraArg(unsigned argInd) const;
+
+  // For use by tracing
+  NameValueTable *getTable() { return &m_nvTable; }
 };
 
 /*

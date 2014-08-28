@@ -125,6 +125,32 @@ void HeapTracer::traceStackFrame(const ActRec *fp, int offset, const TypedValue 
     m_searchQ.push({thisTv, nulltv});
   }
 
+  const int numExtra = fp->numArgs() - fp->m_func->numNonVariadicParams();
+  if (numExtra > 0) {
+    for (int i = 0; i < numExtra; i++) {
+      TypedValue *val = fp->getExtraArgs()->getExtraArg(i);
+      if (val != nullptr) {
+        m_searchQ.push({*val, nulltv});
+        FTRACE(1, "Extra arg: {}\n", tname(val->m_type));
+      }
+    }
+  }
+
+  if (fp->hasVarEnv()) {
+    auto table = fp->getVarEnv()->getTable();
+    auto end = NameValueTable::Iterator::getEnd(table);
+
+    for (auto it = NameValueTable::Iterator(table);
+         it.toInteger() != end.toInteger();
+         it.next()) {
+      auto tv = it.curVal();
+      if(tv->m_type != KindOfNamedLocal) {
+        FTRACE(1, "Something in NVT: {}, {}\n", tname(tv->m_type), tv->m_data.parr);
+        m_searchQ.push({*tv, nulltv});
+      }
+    }
+  }
+
   //Check out the local variables
   TypedValue *tv = (TypedValue *)fp;
   tv --;
