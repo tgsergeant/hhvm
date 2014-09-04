@@ -34,6 +34,8 @@ RefcountSurvey &survey();
 #define LIFETIME_GRANULARITY 1024
 #define SMALL_LIFETIME_GRANULARITY 32
 
+#define MAX_RC 256
+#define MAX_BITS 9
 
 /*
  * Track stuff that happens within one unit of time
@@ -51,6 +53,7 @@ struct ObjectLifetimeData {
   int max_refcount;
   long allocation_time;
   int32_t size;
+  int ops;
 };
 
 /*
@@ -74,7 +77,9 @@ private:
   boost::unordered_map<const void *, ObjectLifetimeData> live_values;
 
   // The number of dead objects which reached each refcount value
-  Histogram<256> refcount_sizes;
+  Histogram<MAX_RC> refcount_sizes;
+
+  Histogram<MAX_RC> refcount_ops_for_size;
 
   // Number of objects in each size bucket (freelists)
   // 'Large' objects are lumped into the 128th slot

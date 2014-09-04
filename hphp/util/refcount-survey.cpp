@@ -29,6 +29,7 @@ TRACE_SET_MOD(rcsurvey);
 
 //Global variable to track the total reference sizes
 folly::Synchronized<Histogram<256>, folly::RWSpinLock> global_refcount_sizes;
+folly::Synchronized<Histogram<256>, folly::RWSpinLock> global_refcount_ops;
 
 folly::Synchronized<Histogram<129>, folly::RWSpinLock> global_object_sizes;
 
@@ -57,19 +58,27 @@ void track_refcount_request_end() {
 
 void dump_global_survey() {
   SYNCHRONIZED_CONST(global_refcount_sizes) {
-
-    long bitcounts[32] = {0};
+  SYNCHRONIZED_CONST(global_refcount_ops) {
+    long bitcounts[MAX_BITS] = {0};
+    long bitops[MAX_BITS] = {0};
     int bc;
 
     long total_bits = 0;
     long total_count = 0;
 
     TRACE(1, "\n\nRaw Refcount Sizes (across all requests)\n");
-    TRACE(1, "Size,Frequency\n");
-    TRACE(1, global_refcount_sizes.print());
-    for(int i = 0; i < 32; i++) {
+    TRACE(1, "Size,Frequency,Operations\n");
+
+    for(int i = 0; i < MAX_RC;  i++) {
+      if (global_refcount_sizes[i] != 0) {
+        FTRACE(1, "{},{},{}\n", i, global_refcount_sizes[i], global_refcount_ops[i]);
+      }
+    }
+
+    for(int i = 0; i < MAX_RC; i++) {
       bc = ceil(log2((double)i + 1));
       bitcounts[bc] += global_refcount_sizes[i];
+      bitops[bc] += global_refcount_ops[i];
 
       total_bits += bc * global_refcount_sizes[i];
       total_count += global_refcount_sizes[i];
@@ -82,7 +91,7 @@ void dump_global_survey() {
 
     double median;
 
-    for(int i = 0; i < 32; i++) {
+    for(int i = 0; i < MAX_RC; i++) {
       half_sum += bitcounts[i];
       if (half_sum > half) {
         long pre = half_sum - bitcounts[i];
@@ -94,15 +103,16 @@ void dump_global_survey() {
     }
 
     TRACE(1, "\n\nRefcount Bits required\n");
-    TRACE(1, "Bits,Frequency\n");
-    for(int i = 0; i < 32; i++) {
+    TRACE(1, "Bits,Frequency,Operations\n");
+    for(int i = 0; i < MAX_BITS; i++) {
       if(bitcounts[i] > 0) {
-        FTRACE(1, "{},{}\n", i, bitcounts[i]);
+        FTRACE(1, "{},{},{}\n", i, bitcounts[i], bitops[i]);
       }
     }
     TRACE(1, "\n");
     FTRACE(1, "Mean: {}\n", mean);
     FTRACE(1, "Median: {}\n", median);
+  }
   }
 
   SYNCHRONIZED_CONST(global_object_sizes) {
@@ -170,6 +180,9 @@ void RefcountSurvey::track_refcount_request_end() {
   SYNCHRONIZED(global_object_sizes) {
     global_object_sizes.add(object_sizes);
   }
+  SYNCHRONIZED(global_refcount_ops) {
+    global_refcount_ops.add(refcount_ops_for_size);
+  }
   for(auto obj : live_values) {
     increment_lifetime_bucket(obj.second.allocation_time, obj.second.size);
   }
@@ -208,6 +221,7 @@ void RefcountSurvey::track_release(const void *address) {
     auto max_ref = live_value->second.max_refcount;
     if (max_ref > 0) {
       refcount_sizes.incr(live_value->second.max_refcount);
+      refcount_ops_for_size.add(live_value->second.max_refcount, live_value->second.ops);
     }
 
     increment_lifetime_bucket(live_value->second.allocation_time, live_value->second.size);
@@ -217,9 +231,6 @@ void RefcountSurvey::track_release(const void *address) {
 
 
 void RefcountSurvey::track_change(const void *address, int32_t value) {
-  if (value > 31) {
-    value = 31;
-  }
   if (value < 0) {
     return;
   }
@@ -229,6 +240,7 @@ void RefcountSurvey::track_change(const void *address, int32_t value) {
     if(live_value->second.max_refcount < value) {
       live_values[address].max_refcount = value;
     }
+    live_values[address].ops += 1;
   }
 }
 
@@ -264,6 +276,7 @@ void RefcountSurvey::track_alloc(const void *address, int32_t value) {
   live_values[address].allocation_time = time();
   live_values[address].max_refcount = -1;
   live_values[address].size = value;
+  live_values[address].ops = 0;
 }
 
 void RefcountSurvey::increment_lifetime_bucket(long allocation_time, int bytes) {
