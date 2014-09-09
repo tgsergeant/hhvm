@@ -94,7 +94,6 @@ APCLocalArray::~APCLocalArray() {
 void APCLocalArray::Release(ArrayData* ad) {
   auto const smap = asSharedArray(ad);
   smap->~APCLocalArray();
-  MM().smartFreeSize(smap, sizeof(APCLocalArray));
 }
 
 size_t APCLocalArray::Vsize(const ArrayData*) { not_reached(); }

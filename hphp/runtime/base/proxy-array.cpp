@@ -57,7 +57,6 @@ ProxyArray* ProxyArray::Make(ArrayData* ad) {
 
 void ProxyArray::Release(ArrayData*ad) {
   decRefArr(innerArr(ad));
-  MM().objFreeLogged(ad, sizeof(ProxyArray));
 }
 
 ProxyArray* ProxyArray::reseatable(ArrayData* oldArr, ArrayData* newArr) {

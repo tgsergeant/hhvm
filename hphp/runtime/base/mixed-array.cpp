@@ -378,7 +378,6 @@ void MixedArray::Release(ArrayData* in) {
 
   auto const cap  = ad->m_cap;
   auto const mask = ad->m_tableMask;
-  MM().objFreeLogged(ad, computeAllocBytes(cap, mask));
 }
 
 static void release_unk_tv(TypedValue& tv) {

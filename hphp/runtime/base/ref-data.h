@@ -96,11 +96,9 @@ struct RefData {
       return;
     }
     this->~RefData();
-    MM().smartFreeSizeLogged(this, sizeof(RefData));
   }
 
   void releaseMem() const {
-    MM().smartFreeSizeLogged(const_cast<RefData*>(this), sizeof(RefData));
   }
 
   IMPLEMENT_COUNTABLENF_METHODS_NO_STATIC

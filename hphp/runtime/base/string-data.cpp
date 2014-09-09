@@ -70,10 +70,6 @@ std::pair<StringData*,uint32_t> allocFlatForLen(uint32_t len) {
 
 ALWAYS_INLINE
 void freeForSize(void* vp, uint32_t size) {
-  if (LIKELY(size <= kMaxSmartSize)) {
-    return MM().smartFreeSizeLogged(vp, size);
-  }
-  return MM().smartFreeSizeBigLogged(vp, size);
 }
 
 }

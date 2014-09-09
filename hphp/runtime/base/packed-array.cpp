@@ -397,7 +397,6 @@ void PackedArray::Release(ArrayData* ad) {
   }
 
   auto const cap = ad->m_packedCap;
-  MM().objFreeLogged(ad, sizeof(ArrayData) + sizeof(TypedValue) * cap);
 }
 
 const TypedValue* PackedArray::NvGetInt(const ArrayData* ad, int64_t ki) {
