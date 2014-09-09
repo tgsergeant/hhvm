@@ -103,6 +103,7 @@ void HeapTracer::traceHeap(NodeHandleFunc nodeFun) {
     }
   }
 
+  TRACE(1, "Finished tracing\n");
   reset();
 }
 
@@ -138,14 +139,13 @@ void HeapTracer::traceStackFrame(const ActRec *fp, int offset, const TypedValue 
 
   if (fp->hasVarEnv()) {
     auto table = fp->getVarEnv()->getTable();
-    auto end = NameValueTable::Iterator::getEnd(table);
 
     for (auto it = NameValueTable::Iterator(table);
-         it.toInteger() != end.toInteger();
+         it.valid();
          it.next()) {
       auto tv = it.curVal();
       if(tv->m_type != KindOfNamedLocal) {
-        FTRACE(1, "Something in NVT: {}, {}\n", tname(tv->m_type), tv->m_data.parr);
+        FTRACE(1, "NVT elem: {} - {}\n", *it.curKey(), tname(tv->m_type));
         m_searchQ.push({*tv, nulltv});
       }
     }
