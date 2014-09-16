@@ -27,6 +27,8 @@ void requestGC();
 int64_t tracingGCCollect();
 void markDestructableObject(ObjectData const *obj);
 
+void markObjectLive(void *ptr, DataType t);
+
 
 ///////////////////////////////////////////////////////////////////////////////
 

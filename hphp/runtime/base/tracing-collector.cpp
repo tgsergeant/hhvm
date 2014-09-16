@@ -47,6 +47,34 @@ void requestGC() {
   info->m_reqInjectionData.setGarbageCollectionFlag();
 }
 
+void markObjectLive(void *ptr, DataType t) {
+  gc().markObjectLive(ptr, t);
+}
+
+
+// stack trace helper
+static AllocStackTrace getStackTrace() {
+  AllocStackTrace trace;
+
+  if (g_context.isNull()) return trace;
+  JIT::VMRegAnchor _;
+  ActRec *fp = g_context->getFP();
+  if (!fp) return trace;
+  PC pc = g_context->getPC();
+
+  const Func *f = fp->m_func;
+  Unit *u = f->unit();
+  Offset off = pc - u->entry();
+  for (;;) {
+    trace.push_back({ f, off, fp->resumed() });
+    fp = g_context->getPrevVMState(fp, &off);
+    if (!fp) break;
+    f = fp->m_func;
+  }
+  return trace;
+}
+
+
 
 //Thread local singleton stuff
 
@@ -79,6 +107,9 @@ int64_t MarkSweepCollector::collect() {
 
   tracer.traceHeap([&] (const SearchNode n) {
       markReachable(n.current.m_data.pstr);
+
+      //DEBUG: Insert into the trace set
+      traceSet.insert(std::make_pair((void *)n.current.m_data.pstr, n.current.m_type));
       });
 
   int reclaimed = 0;
@@ -99,10 +130,34 @@ int64_t MarkSweepCollector::collect() {
 
   FTRACE(1, "Reclaimed {} blocks ({} kb)\n", reclaimed, reclaimed * 4);
 
+  checkTraceSet();
+
   //Clear out the intermediate data we used
   cleanData();
 
   return 0;
+}
+
+void MarkSweepCollector::checkTraceSet() {
+  FTRACE(1, "LiveSet has {} objs, traceSet has {}\n", liveSet.size(), traceSet.size());
+  for (auto elem : liveSet) {
+    StringData *sd = (StringData *)elem.first;
+    if (elem.first != (void *)0x7a7a7a7a7a7a7a7a && sd->getCount() > 0) {
+      // For every LIVE element in the liveset,
+      // check that it was found be the trace. If it was not,
+      // print an error.
+      //
+      // We need to be careful memory isn't reclaimed when the m_count
+      // hits 0 (and indeed, that the m_count actually is decremented)
+      if(traceSet.find(elem) == traceSet.end()) {
+        FTRACE(1, "MISSING FROM TRACE: {} at {}\n", tname(elem.second), elem.first);
+        auto tr = allocTraces[elem.first];
+        for (auto srckey : tr) {
+          FTRACE(2, "   {}\n", show(srckey));
+        }
+      }
+    }
+  }
 }
 
 void MarkSweepCollector::printStack() {
@@ -120,7 +175,7 @@ void MarkSweepCollector::prepareSlabData() {
   const auto alignmentFactor = MemoryManager::kSlabSize / MemoryManager::kSlabAlignment;
 
   for(auto slab : activeSlabs) {
-    int i = m_slabs.size();
+    auto i = m_slabs.size();
     MarkSweepCollector::SlabData sd;
     sd.slab = slab;
     m_slabs.push_back(sd);
@@ -132,6 +187,12 @@ void MarkSweepCollector::prepareSlabData() {
 void MarkSweepCollector::cleanData() {
   m_slabs.clear();
   slabLookup.clear();
+
+  liveSet = traceSet;
+  traceSet.clear();
+
+  allocTraces.clear();
+
 }
 
 MarkSweepCollector::SlabData *MarkSweepCollector::getSlabData(void *ptr) {
@@ -165,6 +226,11 @@ bool MarkSweepCollector::isBlockReachable(void *ptr) {
 void MarkSweepCollector::markDestructable(ObjectData const *obj) {
   destructable.push_back(obj);
   FTRACE(3, "Marked {} as destructable\n", obj);
+}
+
+void MarkSweepCollector::markObjectLive(void *ptr, DataType t) {
+  liveSet.insert(std::make_pair(ptr, t));
+  allocTraces[ptr] = getStackTrace();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

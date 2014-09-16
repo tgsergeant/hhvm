@@ -205,6 +205,8 @@ ArrayData* PackedArray::Grow(ArrayData* old) {
     MM().blockMalloc(sizeof(ArrayData) + cap * sizeof(TypedValue))
   );
 
+  markObjectLive(ad, KindOfArray);
+
   auto const oldSize        = old->m_size;
   auto const oldPosUnsigned = uint64_t{static_cast<uint32_t>(old->m_pos)};
 
@@ -272,6 +274,8 @@ ArrayData* PackedArray::Copy(const ArrayData* adIn) {
   auto const ad = static_cast<ArrayData*>(
     MM().blockMalloc(sizeof(ArrayData) + cap * sizeof(TypedValue))
   );
+  markObjectLive(ad, KindOfArray);
+
   ad->m_kindAndSize = uint64_t{size} << 32 | cap; // zero kind
   ad->m_posAndCount = static_cast<uint32_t>(adIn->m_pos);
 
@@ -367,6 +371,8 @@ ArrayData* MixedArray::MakeReserve(uint32_t capacity) {
   auto const ad = static_cast<ArrayData*>(
     MM().blockMalloc(sizeof(ArrayData) + sizeof(TypedValue) * cap)
   );
+
+  markObjectLive(ad, KindOfArray);
 
   ad->m_kindAndSize = cap;    // zeros m_size and m_kind
   ad->m_posAndCount = uint64_t{1} << 32 |

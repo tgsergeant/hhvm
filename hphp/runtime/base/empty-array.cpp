@@ -97,6 +97,7 @@ ArrayData* EmptyArray::Copy(const ArrayData*) {
   auto const ad = static_cast<ArrayData*>(
     MM().blockMalloc(sizeof(ArrayData) + sizeof(TypedValue) * cap)
   );
+  markObjectLive(ad, KindOfArray);
   ad->m_kindAndSize = cap;
   ad->m_posAndCount = static_cast<uint32_t>(ArrayData::invalid_index);
   assert(ad->m_kind == ArrayData::kPackedKind);
@@ -143,6 +144,7 @@ std::pair<ArrayData*,TypedValue*> EmptyArray::MakePackedInl(TypedValue tv) {
   auto const ad = static_cast<ArrayData*>(
     MM().blockMalloc(sizeof(ArrayData) + cap * sizeof(TypedValue))
   );
+  markObjectLive(ad, KindOfArray);
   ad->m_kindAndSize = uint64_t{1} << 32 | cap; // also set kind
   ad->m_posAndCount = 0;
 

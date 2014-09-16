@@ -22,13 +22,31 @@
 #include "hphp/runtime/base/base-includes.h"
 #include "hphp/runtime/base/memory-manager.h"
 #include "hphp/runtime/base/heap-tracer.h"
+#include "hphp/runtime/vm/srckey.h"
 
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+#include <map>
 
+
+namespace std {
+  template<class E>class hash {
+    using sfinae = typename std::enable_if<std::is_enum<E>::value, E>::type;
+  public:
+    size_t operator()(const E&e) const {
+      return std::hash<typename std::underlying_type<E>::type>()(e);
+    }
+  };
+};
 
 namespace HPHP {
 
 ///////////////////////////////////////////////////////////////////////////////
+
+
+typedef std::vector<SrcKey> AllocStackTrace;
 
 class MarkSweepCollector {
 public:
@@ -48,6 +66,8 @@ public:
    * be called when it is collected.
    */
   void markDestructable(const ObjectData *obj);
+
+  void markObjectLive(void *ptr, DataType t);
 
   void printStack();
 
@@ -88,6 +108,8 @@ private:
    */
   bool isBlockReachable(void *ptr);
 
+  void checkTraceSet();
+
   //A vector is probably not the best data structure for this,
   //depending on the size of the data.
   //Something that is segregated based on memory block will be
@@ -97,6 +119,12 @@ private:
   std::vector<SlabData> m_slabs;
 
   std::unordered_map<void *, size_t> slabLookup;
+
+  std::unordered_set<std::pair<void *, DataType> > liveSet;
+
+  std::unordered_set<std::pair<void *, DataType> > traceSet;
+
+  std::unordered_map<void *, AllocStackTrace> allocTraces;
 
   HeapTracer tracer;
 };

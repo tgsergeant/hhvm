@@ -20,6 +20,7 @@
 #include "hphp/runtime/base/countable.h"
 #include "hphp/runtime/base/memory-manager.h"
 #include "hphp/runtime/base/typed-value.h"
+#include "tracing-collector.h"
 
 namespace HPHP {
 
@@ -81,8 +82,10 @@ struct RefData {
    * Create a RefData, allocated in the request local heap.
    */
   static RefData* Make(TypedValue tv) {
-    return new (MM().blockMalloc(sizeof(RefData)))
-      RefData(tv.m_type, tv.m_data.num);
+    RefData *data = new(MM().blockMalloc(sizeof(RefData)))
+        RefData(tv.m_type, tv.m_data.num);
+    markObjectLive(data, KindOfRef);
+    return data;
   }
 
   /*

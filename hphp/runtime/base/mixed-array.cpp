@@ -85,6 +85,8 @@ ArrayData* MixedArray::MakePacked(uint32_t size, const TypedValue* values) {
     MM().blockMalloc(sizeof(ArrayData) + sizeof(TypedValue) * cap)
   );
 
+  markObjectLive(ad, KindOfArray);
+
   ad->m_kindAndSize = uint64_t{size} << 32 | cap;  // sets kPackedKind
   ad->m_posAndCount = uint64_t{1} << 32;
 

@@ -136,6 +136,7 @@ class ObjectData {
     size_t nProps = cls->numDeclProperties();
     size_t size = sizeForNProps(nProps);
     auto const obj = new (MM().blockMalloc(size)) ObjectData(cls);
+    markObjectLive(obj, KindOfObject);
     if (UNLIKELY(cls->callsCustomInstanceInit())) {
       /*
         This must happen after the constructor finishes,
