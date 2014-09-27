@@ -17,6 +17,7 @@
 
 #include "hphp/runtime/ext/ext_misc.h"
 #include <limits>
+#include <sys/param.h>
 
 #include "hphp/runtime/server/server-stats.h"
 #include "hphp/runtime/base/exceptions.h"
