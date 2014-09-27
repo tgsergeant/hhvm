@@ -92,11 +92,6 @@ script: time hphp/hhvm/hhvm hphp/test/run $TEST_RUN_MODE
 # Adding other notifiers (like IRC) does not disable the email one
 notifications:
   email: false
-  irc:
-    channels:   "chat.freenode.net#hhvm-dev"
-    on_success: always
-    on_failure: always
-    use_notice: true
 
 matrix:
   fast_finish: true
