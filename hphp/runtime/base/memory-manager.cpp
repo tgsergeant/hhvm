@@ -261,7 +261,7 @@ void MemoryManager::refreshStatsHelper() {
 
 void MemoryManager::refreshStatsHelperExceeded() const {
   ThreadInfo* info = ThreadInfo::s_threadInfo.getNoCheck();
-  //info->m_reqInjectionData.setMemExceededFlag();
+  info->m_reqInjectionData.setMemExceededFlag();
 }
 
 #ifdef USE_JEMALLOC
