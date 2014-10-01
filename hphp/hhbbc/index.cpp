@@ -1286,8 +1286,6 @@ res::Class Index::builtin_class(SString name) const {
       name->data());
     std::abort();
   }
-  assert(rcls->val.right() &&
-    (rcls->val.right()->cls->attrs & AttrBuiltin));
   return *rcls;
 }
 

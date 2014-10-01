@@ -40,25 +40,21 @@ template<class Pred>
 Type eval_cell(Pred p) {
   try {
     Cell c = p();
-    if (IS_REFCOUNTED_TYPE(c.m_type)) {
-      switch (c.m_type) {
+    switch (c.m_type) {
       case KindOfString:
         {
           auto const sstr = makeStaticString(c.m_data.pstr);
-          tvDecRef(&c);
           c = make_tv<KindOfStaticString>(sstr);
         }
         break;
       case KindOfArray:
         {
           auto const sarr = ArrayData::GetScalarArray(c.m_data.parr);
-          tvDecRef(&c);
           c = make_tv<KindOfArray>(sarr);
         }
         break;
       default:
-        always_assert(0 && "Impossible constant evaluation occurred");
-      }
+        break;
     }
 
     /*
