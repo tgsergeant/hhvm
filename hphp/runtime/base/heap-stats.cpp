@@ -63,6 +63,7 @@ void HeapStats::trace_heap_stats() {
 }
 
 void HeapStats::request_end() {
+  FTRACE(2, "\n\nURL: {}\n", g_context->getRequestUrl());
   TRACE(2, "\n\nNumber of objects\n");
   TRACE(2, "String,Array,Object,Resource,Ref\n");
   for (auto entry : logs) {
