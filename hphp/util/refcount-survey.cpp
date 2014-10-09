@@ -149,7 +149,7 @@ void RefcountSurvey::OnThreadExit(RefcountSurvey *survey) {
 void RefcountSurvey::print_lifetime_graph() {
     FTRACE(2, "\nTotal allocated: {}\n", time());
     TRACE(2, "\n\nFraction of bytes still alive at time n after their allocation\n");
-    TRACE(2, "Time (MB allocated),Fraction of live bytes\n");
+    TRACE(2, "Time (kB allocated),Fraction of live bytes\n");
 
     long bytes_remaining = time();
     long total_bytes = time();
