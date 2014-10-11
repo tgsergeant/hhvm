@@ -180,7 +180,7 @@ ssize_t check_request_surprise(ThreadInfo* info) {
   }
 
   if (do_gc) {
-    tracingGCCollect();
+    //tracingGCCollect();
   }
 
   trace_heap_stats();

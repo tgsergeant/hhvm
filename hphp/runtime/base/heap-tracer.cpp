@@ -7,6 +7,10 @@ TRACE_SET_MOD(tmp2);
 
 StaticString s_globals("GLOBALS");
 
+void p(std::queue<SearchNode> *q, SearchNode n) {
+  q->push(n);
+}
+
 void HeapTracer::traceHeap(NodeHandleFunc nodeFun) {
   JIT::VMRegAnchor _;
   const ActRec* const fp = g_context->getFP();
@@ -26,7 +30,7 @@ void HeapTracer::traceHeap(NodeHandleFunc nodeFun) {
     TypedValue nulltv;
     nulltv.m_type = DataType::KindOfUninit;
     SearchNode n = {*globals, nulltv};
-    m_searchQ.push(n);
+    p(&m_searchQ, n);
   }
 
   FTRACE(2, "Found {} roots\n", m_searchQ.size());
@@ -56,7 +60,7 @@ void HeapTracer::traceHeap(NodeHandleFunc nodeFun) {
     //Find children, ma
     if(cur.m_type == DataType::KindOfArray) {
       TRACE(3, "Found array\n");
-      if(cur.m_data.parr) {
+      if(cur.m_data.parr && cur.m_data.parr->kind() < ArrayData::ArrayKind::kNumKinds) {
         for(ArrayIter iter(cur.m_data.parr); iter; ++iter) {
           m_searchQ.push({*iter.first().asTypedValue(), cur});
           m_searchQ.push({*iter.second().asTypedValue(), cur});
@@ -123,7 +127,7 @@ void HeapTracer::traceStackFrame(const ActRec *fp, int offset, const TypedValue 
     TypedValue thisTv;
     thisTv.m_data.pobj = fp->getThis();
     thisTv.m_type = KindOfObject;
-    m_searchQ.push({thisTv, nulltv});
+    p(&m_searchQ, {thisTv, nulltv});
   }
 
   const int numExtra = fp->numArgs() - fp->m_func->numNonVariadicParams();
@@ -131,7 +135,7 @@ void HeapTracer::traceStackFrame(const ActRec *fp, int offset, const TypedValue 
     for (int i = 0; i < numExtra; i++) {
       TypedValue *val = fp->getExtraArgs()->getExtraArg(i);
       if (val != nullptr) {
-        m_searchQ.push({*val, nulltv});
+        p(&m_searchQ, {*val, nulltv});
         FTRACE(1, "Extra arg: {}\n", tname(val->m_type));
       }
     }
@@ -146,7 +150,7 @@ void HeapTracer::traceStackFrame(const ActRec *fp, int offset, const TypedValue 
       auto tv = it.curVal();
       if(tv->m_type != KindOfNamedLocal) {
         FTRACE(1, "NVT elem: {} - {}\n", *it.curKey(), tname(tv->m_type));
-        m_searchQ.push({*tv, nulltv});
+        p(&m_searchQ, {*tv, nulltv});
       }
     }
   }
@@ -157,23 +161,27 @@ void HeapTracer::traceStackFrame(const ActRec *fp, int offset, const TypedValue 
   if (func->numLocals() > 0) {
     int n = func->numLocals();
     for (int i = 0; i < n; i++) {
-      m_searchQ.push({*tv, nulltv});
+      p(&m_searchQ, {*tv, nulltv});
       tv --;
     }
   }
 
   //See if the stack holds any secrets
-  visitStackElems(fp, ftop, offset,
-      [&](const ActRec *ar) {
+  const auto base = fp->resumed() ? Stack::resumableStackBase(fp)
+                                  : Stack::frameStackBase(fp);
+  if(ftop <= base) {
+    visitStackElems(fp, ftop, offset,
+        [&](const ActRec *ar) {
         std::string funcName(ar->m_func->fullName()->data());
         FTRACE(1, "HELP I FOUND AN ACTREC WAT DO: {}, {} at {}\n", ar, funcName.c_str(), ar->m_soff);
         //markStackFrame(ar,
-      },
-      [&](const TypedValue *tv) {
-        FTRACE(2, "Found a typedvalue in the stack: {}\n", tv);
-        m_searchQ.push({*tv, nulltv});
-      }
-  );
+        },
+        [&](const TypedValue *tv) {
+          FTRACE(2, "Found a typedvalue in the stack: {}\n", tv);
+          p(&m_searchQ, {*tv, nulltv});
+        }
+    );
+  }
 
   //Try and step down within the stack
   {
