@@ -19,6 +19,23 @@ HeapStats& threadHeapStats() {
   return *HeapStats::TlsWrapper::getCheck();
 }
 
+inline int getDataTypeIndexNoKill(DataType type) {
+  switch (type) {
+    case KindOfUninit       : return 0;
+    case KindOfNull         : return 1;
+    case KindOfBoolean      : return 2;
+    case KindOfInt64        : return 3;
+    case KindOfDouble       : return 4;
+    case KindOfStaticString : return 5;
+    case KindOfString       : return 6;
+    case KindOfArray        : return 7;
+    case KindOfObject       : return 8;
+    case KindOfResource     : return 9;
+    case KindOfRef          : return 10;
+    case KindOfNamedLocal   : return 11;
+    default                 : return -1;
+  }
+}
 
 void HeapStats::trace_heap_stats() {
   HeapStatsEntry entry;
@@ -30,9 +47,9 @@ void HeapStats::trace_heap_stats() {
   }
 
   tracer.traceHeap([&] (SearchNode n) {
-      if (0 <= n.current.m_type && n.current.m_type < MaxNumDataTypes) {
-        entry.counts[getDataTypeIndex(n.current.m_type)] += 1;
-        auto index = getDataTypeIndex(n.current.m_type);
+      auto index = getDataTypeIndexNoKill(n.current.m_type);
+      if (index >= 0) {
+        entry.counts[index] += 1;
         if (n.current.m_type == KindOfString) {
           entry.bytes[index] += sizeof(StringData) + n.current.m_data.pstr->capacity();
         }
