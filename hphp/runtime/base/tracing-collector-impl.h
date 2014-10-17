@@ -23,6 +23,7 @@
 #include "hphp/runtime/base/memory-manager.h"
 
 #include <unordered_map>
+#include <unordered_set>
 #include <queue>
 #include <boost/container/set.hpp>
 
@@ -48,6 +49,8 @@ public:
    * be called when it is collected.
    */
   void markDestructable(const ObjectData *obj);
+
+  void printStack();
 
 private:
   int64_t markHeap();
@@ -75,6 +78,14 @@ private:
   int sweepHeap() {return 1;}
 
   void markReachable(void *ptr);
+
+  /*
+   * Returns true if this pointer is within a reachable
+   * block. Does not mean that the pointer itself is
+   * reachable.
+   */
+  bool isBlockReachable(void *ptr);
+
   bool isReachable(void *ptr);
 
   std::unordered_set<const void *> marked;
@@ -88,6 +99,8 @@ private:
   std::vector<SlabData> m_slabs;
 
   std::unordered_map<void *, size_t> slabLookup;
+
+  std::unordered_set<const void *> marked;
 
   std::queue<TypedValue> m_searchQ;
 };
