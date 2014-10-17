@@ -1,4 +1,5 @@
 #include "hphp/runtime/base/heap-tracer.h"
+#include "hphp/runtime/vm/jit/translator-inline.h"
 
 namespace HPHP {
 
@@ -7,6 +8,7 @@ TRACE_SET_MOD(tmp2);
 StaticString s_globals("GLOBALS");
 
 void HeapTracer::traceHeap(NodeHandleFunc nodeFun) {
+  JIT::VMRegAnchor _;
   const ActRec* const fp = g_context->getFP();
   const TypedValue *const sp = (TypedValue *)g_context->getStack().top();
   int offset = (fp->m_func->unit() != nullptr)
@@ -42,14 +44,14 @@ void HeapTracer::traceHeap(NodeHandleFunc nodeFun) {
       continue; //Ignore primitive values.
     }
 
-    //Handle this node
-    nodeFun(n);
-
     if(isReachable(cur.m_data.pstr)) {
       continue;
     }
 
     markReachable(cur.m_data.pstr);
+
+    //Handle this node
+    nodeFun(n);
 
     //Find children, ma
     if(cur.m_type == DataType::KindOfArray) {

@@ -70,7 +70,6 @@ void MarkSweepCollector::OnThreadExit(MarkSweepCollector *msc) {}
 //Actual implementation
 
 int64_t MarkSweepCollector::collect() {
-  JIT::VMRegAnchor _;
 
   prepareSlabData();
 
