@@ -665,9 +665,7 @@ void MemoryManager::logDeallocation(void* p) {
 
 void *MemoryManager::blockMalloc(size_t nbytes) {
   if (nbytes > kMaxSmartSize) {
-    //This is temporary. Something else needs to be done here.
-    // This is already wrapped in debug stuff
-    return smartMallocSizeBig<false>(nbytes).first;
+    return blockMallocBig<false>(nbytes).first;
   }
 
   //We are not allowed to cross block boundaries
@@ -683,6 +681,20 @@ void *MemoryManager::blockMalloc(size_t nbytes) {
   m_currentBlock.head = (char *)(ptr + size);
   FTRACE(2, "allocated {} bytes from current block\n", nbytes);
   return debugPostAllocate((void *)ptr, nbytes, nbytes);
+}
+
+template
+std::pair<void*, size_t> MemoryManager::blockMallocBig<true>(size_t bytes);
+
+template
+std::pair<void*, size_t> MemoryManager::blockMallocBig<false>(size_t bytes);
+
+template<bool callerSavesActualSize>
+std::pair<void*, size_t> MemoryManager::blockMallocBig(size_t bytes) {
+  // TODO: We need to keep track of all of the big objects that we allocate
+  // This result is already wrapped in debug stuff
+  auto const ret = smartMallocSizeBig<callerSavesActualSize>(bytes);
+  return ret;
 }
 
 /*

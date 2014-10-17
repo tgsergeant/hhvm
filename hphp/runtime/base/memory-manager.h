@@ -384,6 +384,13 @@ public:
   void *blockMalloc(size_t nbytes);
 
   /*
+   * Drop-in replacement for smartMallocSizeBig, which does additional
+   * work to function with garbage collection.
+   */
+  template<bool callerSavesActualSize>
+  std::pair<void*,size_t> blockMallocBig(size_t size);
+
+  /*
    * Returns all slabs currently in use by this thread.
    * Can optionally include only those managed by the garbage collector.
    */
