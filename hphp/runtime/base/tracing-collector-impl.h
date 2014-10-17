@@ -20,7 +20,10 @@
 #include "hphp/runtime/base/tracing-collector.h"
 #include "hphp/util/thread-local.h"
 #include "hphp/runtime/base/base-includes.h"
+#include "hphp/runtime/base/memory-manager.h"
 
+#include <unordered_map>
+#include <queue>
 #include <boost/container/set.hpp>
 
 namespace HPHP {
@@ -49,6 +52,26 @@ public:
 private:
   int64_t markHeap();
 
+  void markStackFrame(const ActRec *fp, int offset, const TypedValue *ftop);
+
+  /*
+   * Grab the data about current slabs from the memory
+   * manager and process it into something useful
+   */
+  void prepareSlabData();
+
+  /*
+   * Clean out any data that can't be reused next time
+   * we collect
+   */
+  void cleanData();
+
+  /*
+   * Find the slab data for any pointer.
+   * Returns NULL if the pointer is not within a valid slab
+   */
+  SlabData *getSlabData(void *ptr);
+
   int sweepHeap() {return 1;}
 
   void markReachable(void *ptr);
@@ -65,6 +88,8 @@ private:
   std::vector<SlabData> m_slabs;
 
   std::unordered_map<void *, size_t> slabLookup;
+
+  std::queue<TypedValue> m_searchQ;
 };
 
 MarkSweepCollector &gc();
