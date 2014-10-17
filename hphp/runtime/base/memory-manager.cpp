@@ -744,7 +744,29 @@ const std::vector<MemoryManager::Slab> MemoryManager::getActiveSlabs(bool gc_onl
 }
 
 void MemoryManager::recycleMemory(Slab slab, std::bitset<kBlocksPerSlab> blocksToFree) {
-  //TODO
+  auto slabIdx = slabLookup.find(uintptr_t(slab.base));
+  assert(slabIdx != slabLookup.end());
+
+  auto blockptr = uintptr_t(slab.base);
+  auto slabPtr = m_slabs.data() + slabIdx->second;
+
+  for(int i = 0; i < kBlocksPerSlab; i++) {
+    if (blocksToFree.test(i)) {
+      //Mark the block as deallocated
+      slabPtr->allocatedBlocks.set(i, false);
+      //Return the block to the allocator
+      Block b;
+      b.head = (void *)blockptr;
+      b.end = (void *)(blockptr + kBlockSize);
+      m_availableBlocks.push(b);
+
+      FTRACE(2, "returned block {} to allocator\n", b.head);
+
+      blockptr += kBlockSize;
+    }
+  }
+
+  FTRACE(1, "{} blocks available to be allocated\n", m_availableBlocks.size());
 }
 ///////////////////////////////////////////////////////////////////////////////
 
