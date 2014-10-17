@@ -1819,6 +1819,11 @@ bool MixedArray::AdvanceMArrayIter(ArrayData* ad, MArrayIter& fp) {
   return true;
 }
 
+size_t MixedArray::MixedSize(ArrayData *ad) {
+  auto a = asMixed(ad);
+  return computeAllocBytes(a->m_cap, a->m_tableMask);
+}
+
 //////////////////////////////////////////////////////////////////////
 
 }

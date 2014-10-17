@@ -864,6 +864,10 @@ ArrayData* MixedArray::AddNewElemC(ArrayData* ad, TypedValue value) {
   return genericAddNewElemC(ad, value);
 }
 
+size_t PackedArray::PackedSize(const ArrayData *ad) {
+  return sizeof(ArrayData) + sizeof(TypedValue) * ad->m_packedCap;
+}
+
 //////////////////////////////////////////////////////////////////////
 
 }
