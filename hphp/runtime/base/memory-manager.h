@@ -356,7 +356,7 @@ public:
    * Should be a divisor of kSlabSize, and a multiple of
    * sizeof(void *)
    */
-  static constexpr size_t kSlabAlignment = 2 << 18;
+  static constexpr size_t kSlabAlignment = kSlabSize;
 
   static constexpr size_t kBlocksPerSlab = kSlabSize / kBlockSize;
 
