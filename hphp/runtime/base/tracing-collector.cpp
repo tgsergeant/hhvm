@@ -25,12 +25,12 @@
 
 #include "hphp/util/trace.h"
 
-TRACE_SET_MOD(smartalloc);
 
 namespace HPHP {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+TRACE_SET_MOD(tmp1);
 
 // External API (tracing-collector.h)
 
@@ -101,7 +101,7 @@ int64_t MarkSweepCollector::collect() {
   //Clear out the intermediate data we used
   cleanData();
 
-  return ret;
+  return 0;
 }
 
 int64_t MarkSweepCollector::markHeap() {
@@ -110,10 +110,10 @@ int64_t MarkSweepCollector::markHeap() {
 
   std::queue<TypedValue> searchQ;
 
-  while (current != (TypedValue *)stack.getStackLowAddress()) {
-    searchQ.push(*current);
-    current --;
-  }
+  const ActRec* const fp = g_context->getFP();
+  const TypedValue *const sp = (TypedValue *)g_context->getStack().getStackLowAddress();
+
+  // TODO Enumerate roots
 
   FTRACE(3, "Found {} roots\n", searchQ.size());
 
