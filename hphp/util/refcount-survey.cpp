@@ -266,7 +266,14 @@ void RefcountSurvey::track_alloc(const void *address, int32_t value) {
 
   int size;
   if(value < 2048) {
-    size = ((value + 8) & ~15) >> 4;
+    // 0   => 0
+    // 1   => 1 (ie 16)
+    // 15  => 1 (ie 16)
+    // 16  => 1 (ie 16)
+    // 17  => 2 (ie 32)
+    // 32  => 2 (ie 32)
+    // 2047=> 128 (ie 2048)
+    size = ((value + 15) & ~15) >> 4;
   } else {
     size = 128;
   }
