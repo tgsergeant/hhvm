@@ -154,7 +154,7 @@ namespace Trace {
       TM(tmp0)  TM(tmp1)  TM(tmp2)  TM(tmp3)               \
       TM(tmp4)  TM(tmp5)  TM(tmp6)  TM(tmp7)               \
       TM(tmp8)  TM(tmp9)  TM(tmp10) TM(tmp11)              \
-      TM(tmp12) TM(tmp13) TM(tmp14) TM(tmp15)
+      TM(tmp12) TM(tmp13) TM(tmp14) TM(heapstats)
 
 enum Module {
 #define TM(x) \

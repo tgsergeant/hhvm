@@ -3,7 +3,7 @@
 
 namespace HPHP {
 
-TRACE_SET_MOD(tmp3);
+TRACE_SET_MOD(heapstats);
 
 HeapStats::TlsWrapper thing;
 
